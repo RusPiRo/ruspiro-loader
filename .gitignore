@@ -1,6 +1,9 @@
 /target
+**/target
 /ruspiro*
 *.img
 **/*.rs.bk
 **/release
 .vscode
+*.lock
+**/*.lock
