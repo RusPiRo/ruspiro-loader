@@ -1,0 +1,31 @@
+[package]
+name = "ruspiro-loader"
+authors = ["Andre Borrmann <pspwizard@gmx.de>"]
+version = "0.2.0" # remember to update html_root_url
+license = "Apache-2.0"
+repository = "https://github.com/RusPiRo/ruspiro-loader/"
+readme = "README.md"
+keywords = ["RusPiRo", "baremetal", "raspberrypi", "bootloader"]
+categories = ["no-std", "embedded"]
+edition = "2018"
+publish = false
+
+[[bin]]
+name = "kernel"
+path = "./src/loader.rs"
+
+[build-dependencies]
+cc = "1.0"
+
+[dependencies]
+ruspiro-gpio = { path = "../../gpio" }
+ruspiro-allocator = { path = "../../allocator" }
+ruspiro-interrupt = { path = "../../interrupt" }
+ruspiro-uart = { path = "../../uart" }
+ruspiro-singleton = { path = "../../singleton" }
+ruspiro-lock = { path = "../../lock" }
+ruspiro-timer = { path = "../../timer" }
+
+[features]
+default = ["ruspiro_pi3"]
+ruspiro_pi3 = []

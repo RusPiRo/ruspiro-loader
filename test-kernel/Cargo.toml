@@ -1,0 +1,27 @@
+[package]
+name = "ruspiro-test-kernel"
+authors = ["Andre Borrmann <pspwizard@gmx.de>"]
+version = "0.0.1" # remember to update html_root_url
+description = """
+Simple test kernel for the boot loader
+"""
+license = "Apache-2.0"
+keywords = ["RusPiRo", "baremetal", "raspberrypi", "bootloader"]
+categories = ["no-std", "embedded"]
+edition = "2018"
+publish = false
+
+# keep either bin or lib
+[[bin]]
+name = "kernel"
+path = "./src/kernel.rs"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+ruspiro-sdk = { path = "../../sdk" }
+
+[features]
+default = ["ruspiro_pi3"]
+ruspiro_pi3 = ["ruspiro-sdk/ruspiro_pi3"]
