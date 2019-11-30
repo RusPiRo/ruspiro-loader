@@ -17,19 +17,27 @@ fn main() {
             if env::var_os("CARGO_FEATURE_RUSPIRO_PI3").is_some() {
                 if target_arch == "aarch64" {
                     cc::Build::new()
+                        .file("src/asm/bootstrap.S")
+                        .flag("-march=armv8-a")
+                        .compile("bootstrap");
+                    cc::Build::new()
+                        .file("src/asm/exceptionvector.S")
+                        .flag("-march=armv8-a")
+                        .compile("excvector");
+                    /*
+                    cc::Build::new()
                         .file("src/asm/boot.S")
                         .flag("-march=armv8-a")
                         .compile("boot");
-
                     cc::Build::new()
                         .file("src/asm/mmu.S")
                         .flag("-march=armv8-a")
                         .compile("mmu");
-
                     cc::Build::new()
                         .file("src/asm/irqtrampoline.S")
                         .flag("-march=armv8-a")
                         .compile("irqtrampoline");
+                      */
                 }
             }
         }

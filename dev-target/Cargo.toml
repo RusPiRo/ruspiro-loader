@@ -12,19 +12,26 @@ publish = false
 
 [[bin]]
 name = "kernel"
-path = "./src/loader.rs"
+path = "./src/entry.rs"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
 
 [build-dependencies]
 cc = "1.0"
 
 [dependencies]
-ruspiro-gpio = { path = "../../gpio" }
-ruspiro-allocator = { path = "../../allocator" }
-ruspiro-interrupt = { path = "../../interrupt" }
-ruspiro-uart = { path = "../../uart" }
-ruspiro-singleton = { path = "../../singleton" }
-ruspiro-lock = { path = "../../lock" }
-ruspiro-timer = { path = "../../timer" }
+ruspiro-register = { path = "../../register", version = "0.3" }
+ruspiro-gpio = { path = "../../gpio", version = "0.3" }
+ruspiro-interrupt = { path = "../../interrupt", version = "0.3" }
+ruspiro-uart = { path = "../../uart", version = "0.3", features = ["with_allocator"] }
+ruspiro-singleton = { path = "../../singleton", version =" 0.3" }
+ruspiro-lock = { path = "../../lock", version = "0.3" }
+#ruspiro-timer = { path = "../../timer", version = "0.3" }
+#ruspiro-cache = { path = "../../cache", version = "0.3" }
 
 [features]
 default = ["ruspiro_pi3"]

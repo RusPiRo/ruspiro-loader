@@ -5,7 +5,7 @@
  * License: Apache 2.0
  **********************************************************************************************************************/
 
-//! # RusPiRo Kernel Push
+//! # RusPiRo Bootloader - Development Host Part
 //!
 //! The crate is pushing a given RusPiRo kernel file to the Raspberry Pi connected via a serial port.
 //!
@@ -90,8 +90,12 @@ fn push_kernel_to_uart(arguments: &ArgMatches) -> Result<(), &'static str> {
 }
 
 fn get_aarch_from_filename(filename: &str) -> Result<u8, &'static str> {
-    if filename.contains("kernel7.img") { return Ok(32); }
-    if filename.contains("kernel8.img") { return Ok(64); }
+    if filename.contains("kernel7.img") {
+        return Ok(32);
+    }
+    if filename.contains("kernel8.img") {
+        return Ok(64);
+    }
     return Err("unable to deterimine architecture from kernel file. Please provide -a parameter.");
 }
 
@@ -126,14 +130,11 @@ fn send_kernel(port: &mut dyn SerialPort, data: Vec<u8>, aarch: u8) -> io::Resul
     port.read(&mut ack)?;
     if &ack == b"ACK" {
         println!("Device acknowledged. Send kernel size {}", data.len());
-        let len_type: [u8; 5] = [
-            (data.len() >> 24) as u8,
-            (data.len() >> 16) as u8,
-            (data.len() >> 8) as u8,
-            (data.len() >> 0) as u8,
-            aarch,
-        ];
-        port.write(&len_type)?;
+        let len_buffer = data.len().to_be_bytes();
+        let type_buffer = [aarch];
+
+        port.write(&len_buffer)?;
+        port.write(&type_buffer)?;
         // wait again for the acknowledge
         port.read(&mut ack)?;
         if &ack == b"ACK" {
@@ -142,7 +143,6 @@ fn send_kernel(port: &mut dyn SerialPort, data: Vec<u8>, aarch: u8) -> io::Resul
             println!("Kernel successfully sent");
         }
     }
-    //port.write(&buf[..])?; // send tail token
 
     Ok(())
 }

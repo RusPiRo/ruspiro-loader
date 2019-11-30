@@ -20,8 +20,10 @@ path = "./src/kernel.rs"
 panic = "abort"
 
 [dependencies]
-ruspiro-sdk = { path = "../../sdk" }
+ruspiro-boot = { path = "../../boot", features = ["with_panic", "with_exception"] }
+ruspiro-allocator = { path = "../../allocator" }
+#ruspiro-sdk = { path = "../../sdk" }
 
 [features]
 default = ["ruspiro_pi3"]
-ruspiro_pi3 = ["ruspiro-sdk/ruspiro_pi3"]
+ruspiro_pi3 = []#"ruspiro-sdk/ruspiro_pi3"]

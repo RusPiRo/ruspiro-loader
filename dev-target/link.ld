@@ -35,11 +35,13 @@ SECTIONS
 		__init_end = .;
 	}
     
-    /* bss section, contains all static variables of the c code */
-    .bss : { 
+    /* bss section, contains all static variables of the rust code */
+    . = ALIGN(16);
+	.bss : { 
     	__bss_start__ = .;
     	*(.bss*)
     	*(COMMON)
+		. = ALIGN(16);
     	__bss_end__ = .;
     }
 
