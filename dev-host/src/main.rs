@@ -130,7 +130,13 @@ fn send_kernel(port: &mut dyn SerialPort, data: Vec<u8>, aarch: u8) -> io::Resul
     port.read(&mut ack)?;
     if &ack == b"ACK" {
         println!("Device acknowledged. Send kernel size {}", data.len());
-        let len_buffer = data.len().to_be_bytes();
+        let len = data.len();
+        let len_buffer = [
+                (len & 0xFF) as u8,
+                ((len >> 8) & 0xFF) as u8,
+                ((len >> 16) & 0xFF) as u8,
+                ((len >> 24) & 0xFF) as u8
+            ];//data.len().to_be_bytes();
         let type_buffer = [aarch];
 
         port.write(&len_buffer)?;
@@ -140,7 +146,11 @@ fn send_kernel(port: &mut dyn SerialPort, data: Vec<u8>, aarch: u8) -> io::Resul
         if &ack == b"ACK" {
             println!("Device acknowledged. Send kernel...");
             port.write(&data)?; // send kernel binary
-            println!("Kernel successfully sent");
+            // wait again for the acknowledge
+            port.read(&mut ack)?;
+            if &ack == b"ACK" {
+                println!("Kernel successfully sent");
+            }
         }
     }
 
