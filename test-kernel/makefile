@@ -1,5 +1,6 @@
 #*****************************************************************
-# Makefile to build the RusPiRo bootloader kernel
+# Makefile to build the RusPiRo test kernel that verifies
+# it could be loaded using the bootloader
 #
 # Copyright (c) 2019 by the authors
 # 
@@ -10,9 +11,8 @@
 deploy32: all32
 	../dev-host/target/release/ruspiro-push -k .\\target\\kernel7.img -p COM5
 
-all32: LINKERSCRIPT = ./link32.ld
 all32: export CFLAGS = -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53
-all32: export RUSTFLAGS = -C linker=arm-eabi-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+a53,+fp-armv8,+v8,+vfp3,+d16,+thumb2,+neon -C link-arg=-nostartfiles -C link-arg=-T$(LINKERSCRIPT) -C opt-level=3 -C debuginfo=0
+all32: export RUSTFLAGS = -C linker=arm-eabi-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+v8,+vfp3,+d16,+thumb2,+neon -C link-arg=-nostartfiles -C link-arg=-T./link32.ld -C opt-level=3 -C debuginfo=0
 all32: export CC = arm-eabi-gcc.exe
 all32: export AR = arm-eabi-ar.exe
 all32: kernel7
@@ -25,9 +25,8 @@ kernel7:
 deploy64: all64
 	../dev-host/target/release/ruspiro-push -k .\\target\\kernel8.img -p COM5
 
-all64: LINKERSCRIPT = ./link64.ld
 all64: export CFLAGS = -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53
-all64: export RUSTFLAGS = -C linker=aarch64-elf-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-nostartfiles -C opt-level=3 -C debuginfo=0 -C link-arg=-T$(LINKERSCRIPT)
+all64: export RUSTFLAGS = -C linker=aarch64-elf-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-nostartfiles -C opt-level=3 -C debuginfo=0 -C link-arg=-T./link64.ld
 all64: export CC = aarch64-elf-gcc.exe
 all64: export AR = aarch64-elf-ar.exe
 all64: kernel8
