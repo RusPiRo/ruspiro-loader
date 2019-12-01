@@ -10,16 +10,14 @@
 
 extern crate alloc;
 use alloc::vec::Vec;
-use core::convert::TryInto;
 
+use ruspiro_cache::*;
 use ruspiro_interrupt::*;
 use ruspiro_lock::*;
 use ruspiro_register::system::*;
 use ruspiro_singleton::Singleton;
-use ruspiro_uart::{InterruptType, Uart1};
-use ruspiro_gpio::GPIO;
-use ruspiro_cache::*;
 use ruspiro_timer as timer;
+use ruspiro_uart::{InterruptType, Uart1};
 
 /// Define singleton Uart1 accessor to ensure safe access from main processing as well as
 /// from interrupt handler
@@ -70,7 +68,6 @@ pub fn run() -> ! {
         // wait until the interrupt has signaled that the data has arrived
         KERNEL_LOADED.down();
         disable_interrupts();
-        GPIO.take_for(|gpio| gpio.get_pin(20).unwrap().to_output().high());
 
         UART.use_for(|uart| {
             uart.send_string("new kernel received, preparing re-boot...\r\n");
@@ -84,42 +81,58 @@ pub fn run() -> ! {
             core::ptr::copy_nonoverlapping(
                 kernel.binary.as_ptr(),
                 kernel.boot_address as *mut u8,
-                kernel.binary.len()
+                kernel.binary.len(),
             );
 
             // after we copied the new kernel to the right memory address flush the caches to ensure
             // the core sees the latest version of memory and instructions
-            flush_icache_range(kernel.boot_address, kernel.boot_address + kernel.binary.len() as u64);
+            flush_icache_range(
+                kernel.boot_address,
+                kernel.boot_address + kernel.binary.len() as u64,
+            );
 
             UART.use_for(|uart| {
                 uart.send_string("re-boot in progress ...\r\n");
             });
 
+            // restore as many stuff into the boot reset state as possible
+            clean_up_for_reboot();
+
             // do some arbitrary sleeping before the real re-boot...
             timer::sleep(10000);
-            
+
             // based on the kernel mode we could either "re-boot" immidiately or
             // we need to switch to aarch32 mode
             match kernel.boot_mode {
                 64 => {
                     // we can directly jump to the original __boot entry point as we do not change
                     // the mode
-                    extern "C" { fn __boot() -> !; }
+                    extern "C" {
+                        fn __boot() -> !;
+                    }
                     __boot();
-                },
+                }
                 32 => {
                     // we need to perform an exeption level switch to be able to
                     // enter aarch32 in HYP/EL2 mode
                     unimplemented!();
-                },
+                }
                 _ => {
                     // well, whatever is requested we cannot handle this here...
                     unimplemented!();
                 }
             }
-            
         }
     }
+}
+
+/// Do some clean up to reset as many as known used registers to their reset values which will make
+/// the re-boot from the bootloader compared to a usual cold boot on the device more predictable
+fn clean_up_for_reboot() {
+    // TODO: typically the Pi boots with MMU disabled, however,
+    // disabling it bevore the reboot has shown that the Pi hangs after re-enabling it.
+    // the root cause is unknown...
+    //mmu::disable_mmu();
 }
 
 /// Interrupt handler for the UART1 being triggered once new data was received
@@ -148,10 +161,10 @@ fn uart_handler() {
                     // extract the kernel size from the buffer
                     //let tmp: [u8;4] = metadata[0..4];
                     //let size = u32::from_be_bytes(metadata[0..4].try_into().unwrap()) as usize;
-                    let size = metadata[0] as usize |
-                               (metadata[1] as usize) << 8 |
-                               (metadata[2] as usize) << 16 |
-                               (metadata[3] as usize) << 24;
+                    let size = metadata[0] as usize
+                        | (metadata[1] as usize) << 8
+                        | (metadata[2] as usize) << 16
+                        | (metadata[3] as usize) << 24;
                     // extract the kernel architecture type from the metadata buffer
                     let aarch = metadata[4];
                     // before receiving the binary create the buffer big enough to store the data

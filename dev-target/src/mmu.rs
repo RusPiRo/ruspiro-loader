@@ -58,7 +58,8 @@ pub fn initialize_mmu(core: u32) {
 
     hcr_el2::write(hcr_el2::DC::DISABLE | hcr_el2::VM::DISABLE);
 
-    // set the SCTRL_EL2 to activate the MMU
+    // set the SCTRL_EL2 to activate the MMU, as part of this the data cache and instruction cache
+    // are also enabled
     sctlr_el2::write(
         sctlr_el2::M::ENABLE
             | sctlr_el2::A::DISABLE
@@ -70,6 +71,21 @@ pub fn initialize_mmu(core: u32) {
     // let 2 cycles pass with a nop to settle the MMU
     nop();
     nop();
+}
+
+pub fn disable_mmu() {
+    // disabling the MMU will also disable data and instruction cache
+    sctlr_el2::write(sctlr_el2::M::DISABLE | sctlr_el2::C::DISABLE | sctlr_el2::I::DISABLE);
+    // let 2 cycles pass with a nop to settle the MMU
+    nop();
+    nop();
+    // as we have switched of the MMU we might also invalidate all TTLB entries
+    unsafe {
+        asm!(
+            "dsb sy                   
+                   isb"
+        )
+    };
 }
 
 /// # Safety
@@ -105,6 +121,9 @@ fn setup_page_tables() {
             MMU_CFG.ttlb_lvl1[i] = (i as u64 * 0x20_0000) | 0x400 | 0b01;
         }
 
-        asm!("dsb   ishst");
+        asm!(
+            "dsb   ishst
+              tlbi  alle2is"
+        );
     }
 }
