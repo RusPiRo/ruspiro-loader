@@ -20,11 +20,15 @@ mod panic;
 use ruspiro_interrupt::IRQ_MANAGER;
 use ruspiro_timer as timer;
 use ruspiro_uart::Uart1;
+use ruspiro_gpio::debug;
 
 /// Entry point that is called by the bootstrapping code.
 ///
 #[export_name = "__rust_entry"]
 pub fn __rust_entry(core: u32) -> ! {
+    // use the unsafe direct GPIO access to lit LED 20 to indicate we have reached at least this point
+    unsafe { debug::lit_debug_led(20); }
+
     // very first thing is to setup the MMU which allows us to
     // use atomic operations in the upcomming initialization
     mmu::initialize_mmu(core);
@@ -35,7 +39,7 @@ pub fn __rust_entry(core: u32) -> ! {
         // string
         let mut uart = Uart1::new();
         let _ = uart.initialize(250_000_000, 115_200);
-        uart.send_string("########## RusPiRo ---------- loading ---------- ##########\r\n");
+        uart.send_string("########## RusPiRo ---------- Bootloader v1.0 ---------- ##########\r\n");
         // spend some time doing nothing as the followup entry point may want to re-initialize the
         // uart and this would interfere the current data transfer of the welcome string that might
         // not yet be finished...(from the device point of view)

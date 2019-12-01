@@ -30,12 +30,12 @@ $> rustup toolchain install nightly-2019-11-17-gnu
 To build the bootload kernel just execute `make all` or the `build.sh` script from the `dev-target` folder. If the build succeds the final binary `kernel8.img`could be found in the folder `./dev-target/target/`. Copy this file to an empty microSD card that is formatted as FAT32. In addition put the `bootcode.bin` and `start.elf` files available on the official Raspberry Pi [firmware page](https://github.com/raspberrypi/firmware/tree/master/boot) on this card.
 
 To verify that the booloader is working as expected you need to do the following:
-1. connect a LED with a resistor to GPIO pin 17
+1. connect a LED with a resistor to GPIO pin 20
 2. connect the miniUART GPIO pins to through a UART/USB dongle to the host machine
 3. start a terminal program on the machine to connect to the serial port the Raspberry Pi is connected and set the speed to `115200`.
 4. Put the microSD card containing the recently build `kernel8.img`, `bootcode.bin` and `start.elf` files into your Raspberry Pi and power the same on.
 
-As a result the LED should be lit and the console should print (the version number may differ):
+As a result the LED should be lit and the console should print (the version number may differ) at least:
 ```
 ########## RusPiRo --------- Bootloader v1.0 --------- ##########
 ```
