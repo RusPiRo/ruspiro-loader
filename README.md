@@ -98,4 +98,4 @@ $> make deploy64
 
 This should build the test kernel and push it using the COM5 serial port to the Raspberry Pi. Please adjust the respective serial port in the makefile if it differs on your machine.
 
-The test kernel will lit a LED connected to GPIO 17 and will blink a LED connected to GPIO 18 of the Raspberry Pi.
+The test kernel will lit a LED connected to GPIO 17 and will blink a LED connected to GPIO 18 of the Raspberry Pi when successfully deployed and run.
