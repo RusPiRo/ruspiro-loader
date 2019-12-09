@@ -1,8 +1,8 @@
 /***********************************************************************************************************************
  * linker script to define memory addresse / sections and symbols of the binary to be build
  * known constraints:
- * Entry point address need to be 0x80000, the binarry is not allowed to start prior to this address
- * Stack pointer and heap poinzer need to be 16Bit aligned
+ * Entry point address need to be 0x80000
+ * Stack pointer and heap pointer need to be 16Bit aligned
  *
  * Copyright (c) 2019 by the authors
  *
@@ -21,9 +21,9 @@ SECTIONS
 	 * ensure running code waiting for new kernel is far enough in the memory to allow switching the boot part
 	 * starting from 0x80000 (aarch64) or 0x8000 (aarch32) on the fly.
 	 * The kernel to be loaded should always be smaller as this value!!!!!
-	 * So the actual new kernel need to be less than 256kB
+	 * So the actual new kernel need to be less than 512kB
 	 **************************************************************************************************************/
-	. += 0x40000;
+	. += 0x80000;
     .text : {  *(.text*) }
     .rodata : { *(.rodata*) }
     .data : { *(.data*) }
@@ -65,9 +65,9 @@ SECTIONS
 	__stack_end__ = .;
 	. += 0x01000;
 	__stack_top_EL3__ = .;
-	. += 0x0E000;
+	. += 0x01000;
 	__stack_top_EL2__ = .;
-	. += 0x0E000;
+	. += 0x01000;
 	__stack_top_EL1__ = .;
 	. += 0x01000;
 	__stack_top_EL0__ = .;

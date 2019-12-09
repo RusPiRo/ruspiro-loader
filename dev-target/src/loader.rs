@@ -18,6 +18,9 @@ use ruspiro_register::system::*;
 use ruspiro_singleton::Singleton;
 use ruspiro_timer as timer;
 use ruspiro_uart::{InterruptType, Uart1};
+use ruspiro_gpio::*;
+
+use crate::mmu;
 
 /// Define singleton Uart1 accessor to ensure safe access from main processing as well as
 /// from interrupt handler
@@ -54,6 +57,7 @@ pub fn run() -> ! {
         uart.send_string("prepare boot loader\r\n");
         uart.enable_interrupts(InterruptType::Receive);
     });
+
     // enable the interrupt for the Uart1
     IRQ_MANAGER.take_for(|irq_mgr| irq_mgr.activate(Interrupt::Aux));
     enable_interrupts();
@@ -83,23 +87,29 @@ pub fn run() -> ! {
                 kernel.boot_address as *mut u8,
                 kernel.binary.len(),
             );
-
             // after we copied the new kernel to the right memory address flush the caches to ensure
             // the core sees the latest version of memory and instructions
-            flush_icache_range(
-                kernel.boot_address,
-                kernel.boot_address + kernel.binary.len() as u64,
-            );
-
+            flush_icache_range(kernel.boot_address, kernel.boot_address + kernel.binary.len() as u64);
+            cleaninvalidate();
+            
             UART.use_for(|uart| {
                 uart.send_string("re-boot in progress ...\r\n");
             });
 
+            UART.use_for(|uart| {
+                uart.send_string("re-booting with new kernel from ");
+                uart.send_hex(kernel.boot_address);
+                uart.send_string(" with size ");
+                uart.send_hex(kernel.binary.len() as u64);
+                uart.send_string("\r\n");
+            });
+
             // restore as many stuff into the boot reset state as possible
+            // as this deactivates MMU no atomic operations from here
             clean_up_for_reboot();
 
             // do some arbitrary sleeping before the real re-boot...
-            timer::sleep(10000);
+            timer::sleep(1_500_000);
 
             // based on the kernel mode we could either "re-boot" immidiately or
             // we need to switch to aarch32 mode
@@ -107,15 +117,15 @@ pub fn run() -> ! {
                 64 => {
                     // we can directly jump to the original __boot entry point as we do not change
                     // the mode
-                    extern "C" {
-                        fn __boot() -> !;
-                    }
-                    __boot();
+                    unsafe { debug::lit_debug_led(20); }
+                    extern "C" { fn __boot_64(addr: u64) -> !; }
+                    __boot_64(kernel.boot_address);
                 }
                 32 => {
                     // we need to perform an exeption level switch to be able to
                     // enter aarch32 in HYP/EL2 mode
-                    unimplemented!();
+                    extern "C" { fn __boot_32(addr: u64) -> !; }
+                    __boot_32(kernel.boot_address);
                 }
                 _ => {
                     // well, whatever is requested we cannot handle this here...
@@ -132,7 +142,7 @@ fn clean_up_for_reboot() {
     // TODO: typically the Pi boots with MMU disabled, however,
     // disabling it bevore the reboot has shown that the Pi hangs after re-enabling it.
     // the root cause is unknown...
-    //mmu::disable_mmu();
+    mmu::disable_mmu();
 }
 
 /// Interrupt handler for the UART1 being triggered once new data was received
@@ -198,4 +208,20 @@ fn uart_handler() {
             }
         }
     });
+}
+
+
+
+#[no_mangle]
+pub fn dump_memory(addr: u64, len: u64) {
+    use core::ptr::read_volatile;
+    unsafe {
+        UART.use_for(|uart| {
+            for i in 0..len {
+                uart.send_hex(addr + i as u64*4); uart.send_string(":  \t");
+                uart.send_hex(read_volatile((addr + i as u64 * 4) as *const u32) as u64);
+                uart.send_string("\r\n");
+            }
+        });
+    }
 }

@@ -17,8 +17,14 @@
  * License: Apache License 2.0
  **************************************************************************************************/
 
- .global __boot // global entry point
- .global __hang // helper to savely "hang" a core with nothing else to do
+// global entry point
+.global __boot
+// entry point when an aarch64 kernel has been loaded and need to be run
+.global __boot_64
+// entry point when an aarch32 kernel has been loaded and need to be run from aarch64 mode
+.global __boot_32 
+// helper to savely "hang" a core with nothing else to do
+.global __hang 
 
 /***************************************************************************************************
  * main entry point using specific section that is ensured to be linked against the entrypoint
@@ -26,12 +32,6 @@
  **************************************************************************************************/
 .section .text.boot
 __boot:
-    // for the sake of 100% safety trap all cores except 0 into an endless loop for the time beeing
-    // this makes this binary a truely single-core kernel
-    mrs 	x0, mpidr_el1   // get CPU id
-    and 	x0, x0, #3
-    cbnz    x0, __hang
-    
     // the very first thing to do is to setup the stack pointer.
     ldr		x0,=__stack_top_EL2__
     mov     sp, x0
@@ -81,6 +81,41 @@ __boot:
     b   __hang
 
 /***************************************************************************************************
+ * run an aarch64 kernel image from within aarch64 mode.
+ * There is usually nothing special to be done, but to be in a compareable state as with the aarch32
+ * mode we switch from EL2 -> EL1 to execute the just loaded kernel
+ **************************************************************************************************/
+.section .text
+__boot_64:
+    // TODO: switch to EL1 need to be implemented, for the time beeing just call the new kernel
+    br      x0
+    b       __hang
+
+
+/***************************************************************************************************
+ * run an aarch32 kernel image from within aarch64 mode.
+ * This requires an architecture change that is only possible with an exception level switch:
+ * 1. From aarch64 EL2 -> aarch64 EL3
+ * 2. Return from aarch64 EL3 into aarch32 HYP
+ **************************************************************************************************/
+.section .text
+__boot_32:
+    // to boot into aarch32 return from EL2 into EL1 to switch the architecture mode
+    msr     elr_el2, x0 // eret return address is the 32Bit kernel image given to this function
+    
+    // configure spsr_el2 and hcr_el2 to ensure we are returning to EL1(SYS)/aarch32
+    mrs     x10, hcr_el2
+    bic     x10, x10, #(1 << 31) // especially bit 31 = 0 -> lower level = aarch32
+    msr     hcr_el2, x10
+    mov     x1, #(1 << 4) // M[4] bit = 1 -> EL3 came from aarch32
+    mov     x2, #0b0011 // M[3:0] -> EL2 came from SVC (supervisor)
+    orr     x1, x1, x2
+    msr     spsr_el2, x1
+
+    eret    // return to EL1 - we should never come back here   
+
+
+/***************************************************************************************************
  * savely hang the core
  * use the WFE instruction to save power while waiting for any event
  * wfe is triggered by any exception/interrupt raised, but as long as there is no event
@@ -90,3 +125,27 @@ __boot:
  __hang:
     wfe
     b   __hang
+
+/*******************************************************************************
+ *
+ *******************************************************************************/
+.section .rodata
+.global TestKernelAarch32
+.balign 0x4000
+TestKernelAarch32:
+.incbin "../test-kernel/target/kernel7.img"
+.global TestKernelAarch32_end
+TestKernelAarch32_end:
+.byte 0
+
+/*******************************************************************************
+ *
+ *******************************************************************************/
+.section .rodata
+.global TestKernelAarch64
+.balign 0x4000
+TestKernelAarch64:
+.incbin "../test-kernel/target/kernel8.img"
+.global TestKernelAarch64_end
+TestKernelAarch64_end:
+.byte 0

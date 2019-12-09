@@ -14,7 +14,7 @@
 //!
 
 mod loader;
-mod mmu;
+pub mod mmu;
 mod panic;
 
 use ruspiro_interrupt::IRQ_MANAGER;
@@ -27,7 +27,7 @@ use ruspiro_gpio::debug;
 #[export_name = "__rust_entry"]
 pub fn __rust_entry(core: u32) -> ! {
     // use the unsafe direct GPIO access to lit LED 20 to indicate we have reached at least this point
-    unsafe { debug::lit_debug_led(20); }
+    //unsafe { debug::lit_debug_led(20); }
 
     // very first thing is to setup the MMU which allows us to
     // use atomic operations in the upcomming initialization

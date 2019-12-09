@@ -14,7 +14,7 @@ publish = false
 # keep either bin or lib
 [[bin]]
 name = "kernel"
-path = "./src/entry.rs"
+path = "./src/kernel.rs"
 
 [profile.dev]
 panic = "abort"
@@ -26,11 +26,13 @@ panic = "abort"
 cc = "1.0"
 
 [dependencies]
-ruspiro-register = { path = "../../register", version = "0.3" }
-ruspiro-interrupt = { path = "../../interrupt", version = "0.3" }
+ruspiro-boot = { path = "../../boot", version = "0.3", features = ["singlecore"] }
+#ruspiro-register = { path = "../../register", version = "0.3" }
+#ruspiro-interrupt = { path = "../../interrupt", version = "0.3" }
 ruspiro-gpio = { path = "../../gpio", version = "0.3" }
 ruspiro-timer = { path = "../../timer", version = "0.3" }
 ruspiro-uart = { path = "../../uart", version = "0.3", features = ["with_allocator"] }
+ruspiro-singleton = { path = "../../singleton", version = "0.3" }
 
 [features]
 default = ["ruspiro_pi3"]

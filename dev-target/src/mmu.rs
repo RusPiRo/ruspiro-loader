@@ -58,14 +58,13 @@ pub fn initialize_mmu(core: u32) {
 
     hcr_el2::write(hcr_el2::DC::DISABLE | hcr_el2::VM::DISABLE);
 
-    // set the SCTRL_EL2 to activate the MMU, as part of this the data cache and instruction cache
-    // are also enabled
+    // set the SCTRL_EL2 to activate the MMU, as part of this the data cache is also enabled
     sctlr_el2::write(
         sctlr_el2::M::ENABLE
             | sctlr_el2::A::DISABLE
             | sctlr_el2::C::ENABLE
             | sctlr_el2::SA::DISABLE
-            | sctlr_el2::I::ENABLE,
+            | sctlr_el2::I::DISABLE,
     );
 
     // let 2 cycles pass with a nop to settle the MMU
@@ -75,7 +74,10 @@ pub fn initialize_mmu(core: u32) {
 
 pub fn disable_mmu() {
     // disabling the MMU will also disable data and instruction cache
-    sctlr_el2::write(sctlr_el2::M::DISABLE | sctlr_el2::C::DISABLE | sctlr_el2::I::DISABLE);
+    sctlr_el2::write(
+        sctlr_el2::M::DISABLE 
+        | sctlr_el2::C::DISABLE 
+        | sctlr_el2::I::DISABLE);
     // let 2 cycles pass with a nop to settle the MMU
     nop();
     nop();
@@ -83,7 +85,7 @@ pub fn disable_mmu() {
     unsafe {
         asm!(
             "dsb sy                   
-                   isb"
+             isb"
         )
     };
 }
@@ -123,7 +125,7 @@ fn setup_page_tables() {
 
         asm!(
             "dsb   ishst
-              tlbi  alle2is"
+             tlbi  alle2is"
         );
     }
 }
