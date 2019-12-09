@@ -2,7 +2,7 @@
  * Copyright (c) 2019 by the authors
  *
  * Author: André Borrmann
- * License: Apache 2.0
+ * License: Apache License 2.0
  **********************************************************************************************************************/
 
 //! # MMU maintenance

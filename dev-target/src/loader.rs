@@ -2,7 +2,7 @@
  * Copyright (c) 2019 by the authors
  *
  * Author: André Borrmann
- * License: ???
+ * License: Apache License 2.0
  **********************************************************************************************************************/
 
 //! # Bootloader
@@ -18,8 +18,6 @@ use ruspiro_register::system::*;
 use ruspiro_singleton::Singleton;
 use ruspiro_timer as timer;
 use ruspiro_uart::{InterruptType, Uart1};
-use ruspiro_gpio::*;
-
 use crate::mmu;
 
 /// Define singleton Uart1 accessor to ensure safe access from main processing as well as
@@ -120,7 +118,6 @@ pub fn run() -> ! {
             // we need to switch to aarch32 mode
             match kernel.boot_mode {
                 64 => {
-                    unsafe { debug::lit_debug_led(20); }
                     extern "C" { fn __boot_64(addr: u64) -> !; }
                     __boot_64(kernel.boot_address);
                 }
@@ -209,20 +206,4 @@ fn uart_handler() {
             }
         }
     });
-}
-
-
-
-#[no_mangle]
-pub fn dump_memory(addr: u64, len: u64) {
-    use core::ptr::read_volatile;
-    unsafe {
-        UART.use_for(|uart| {
-            for i in 0..len {
-                uart.send_hex(addr + i as u64*4); uart.send_string(":  \t");
-                uart.send_hex(read_volatile((addr + i as u64 * 4) as *const u32) as u64);
-                uart.send_string("\r\n");
-            }
-        });
-    }
 }

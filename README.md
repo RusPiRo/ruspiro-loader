@@ -27,15 +27,14 @@ In case the current nightly contains issues check the current build state [here]
 $> rustup toolchain install nightly-2019-11-17-gnu
 ```
 ### Building
-To build the bootload kernel just execute `make all` or the `build.sh` script from the `dev-target` folder. If the build succeds the final binary `kernel8.img`could be found in the folder `./dev-target/target/`. Copy this file to an empty microSD card that is formatted as FAT32. In addition put the `bootcode.bin` and `start.elf` files available on the official Raspberry Pi [firmware page](https://github.com/raspberrypi/firmware/tree/master/boot) on this card.
+To build the bootloader kernel just execute `make all` or the `build.sh` script from the `dev-target` folder. If the build succeeds the final binary `kernel8.img`could be found in the folder `./dev-target/target/`. Copy this file to an empty microSD card that is formatted as FAT32. In addition put the `bootcode.bin` and `start.elf` files available on the official Raspberry Pi [firmware page](https://github.com/raspberrypi/firmware/tree/master/boot) on this card.
 
 To verify that the booloader is working as expected you need to do the following:
-1. connect a LED with a resistor to GPIO pin 20
-2. connect the miniUART GPIO pins to through a UART/USB dongle to the host machine
-3. start a terminal program on the machine to connect to the serial port the Raspberry Pi is connected and set the speed to `115200`.
-4. Put the microSD card containing the recently build `kernel8.img`, `bootcode.bin` and `start.elf` files into your Raspberry Pi and power the same on.
+1. connect the miniUART GPIO pins to through a UART/USB dongle to the host machine
+2. start a terminal program on the machine to connect to the serial port the Raspberry Pi is connected and set the speed to `115200`.
+3. Put the microSD card containing the recently build `kernel8.img`, `bootcode.bin` and `start.elf` files into your Raspberry Pi and power the same on.
 
-As a result the LED should be lit and the console should print (the version number may differ) at least:
+As a result the console should print (the version number may differ) at least:
 ```
 ########## RusPiRo --------- Bootloader v1.0 --------- ##########
 ```
@@ -90,7 +89,7 @@ Build and deplay in aarch32 mode:
 $> make deploy32
 ```
 
-Build and deplay in aarch64 mode:
+Build and deploy in aarch64 mode:
 
 ```
 $> make deploy64
@@ -98,4 +97,7 @@ $> make deploy64
 
 This should build the test kernel and push it using the COM5 serial port to the Raspberry Pi. Please adjust the respective serial port in the makefile if it differs on your machine.
 
-The test kernel will lit a LED connected to GPIO 17 and will blink a LED connected to GPIO 18 of the Raspberry Pi when successfully deployed and run.
+The test kernel will blink a LED connected to GPIO 17 of the Raspberry Pi when successfully deployed and run.
+
+## License
+This crate is licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)

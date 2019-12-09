@@ -22,7 +22,7 @@ matrix:
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
         - sudo chmod ugo+x dev-target/build.sh
-      script: cd dev-target && ./build.sh travis
+      script: cd dev-target && sed -i 's/path.*=.*\".*", //g' Cargo.toml && ./build.sh travis
 
     - name: "RusPiRo Test Kernel 64Bit"
       install:
@@ -40,4 +40,4 @@ matrix:
         - rustup target add armv7-unknown-linux-gnueabihf
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
-      script: cd test-kernel && ./build.sh 32
+      script: cd test-kernel && sed -i 's/path.*=.*\".*", //g' Cargo.toml && ./build.sh 32

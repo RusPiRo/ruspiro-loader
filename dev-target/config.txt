@@ -1,4 +1,0 @@
-# Configure the boot process to load the kernel at address 0x0 and don't do any
-# preparation work. This kick off all cores at once in aarch64 EL3
-kernel_old=1
-arm_64bit=1

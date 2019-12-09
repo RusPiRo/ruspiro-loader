@@ -24,20 +24,6 @@ fn main() {
                         .file("src/asm/exceptionvector.S")
                         .flag("-march=armv8-a")
                         .compile("excvector");
-                    /*
-                    cc::Build::new()
-                        .file("src/asm/boot.S")
-                        .flag("-march=armv8-a")
-                        .compile("boot");
-                    cc::Build::new()
-                        .file("src/asm/mmu.S")
-                        .flag("-march=armv8-a")
-                        .compile("mmu");
-                    cc::Build::new()
-                        .file("src/asm/irqtrampoline.S")
-                        .flag("-march=armv8-a")
-                        .compile("irqtrampoline");
-                      */
                 }
             }
         }
