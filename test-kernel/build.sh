@@ -2,6 +2,12 @@
 
 set +ev
 
+if [ $# -eq 0 ] 
+    then 
+        echo "not enough parameter given"
+        exit 1
+fi
+
 # chekc which aarch version to build
 if [ $1 = "64" ]
     then
@@ -14,7 +20,7 @@ if [ $1 = "64" ]
         cargo xbuild --target aarch64-unknown-linux-gnu --release --all
         cargo objcopy -- -O binary ./target/aarch64-unknown-linux-gnu/release/kernel ./target/kernel8.img
         # after build deploy to device using serial port
-        if [ $2 = "deploy" ]
+        if [ "$2" = "deploy" ]
             then
                 ../dev-host/target/release/ruspiro-push -k ./target/kernel8.img -p COM5
         fi
@@ -29,7 +35,7 @@ elif [ $1 = "32" ]
         cargo xbuild --target armv7-unknown-linux-gnueabihf --release --bin kernel --target-dir ./target/
         cargo objcopy -- -O binary ./target/armv7-unknown-linux-gnueabihf/release/kernel ./target/kernel7.img
         # after build deploy to device using serial port
-        if [ $2 = "deploy" ]
+        if [ "$2" = "deploy" ]
             then
                 ../dev-host/target/release/ruspiro-push -k ./target/kernel7.img -p COM5
         fi

@@ -104,26 +104,27 @@ pub fn run() -> ! {
                 uart.send_string("\r\n");
             });
 
+            // do some arbitrary sleeping before the real re-boot...
+            // and print some "progressing points" to enable the host machine to
+            // start a terminal program and connect via uart after the data has been transmitted
+            for _ in 0..100 {
+                UART.use_for(|uart| uart.send_string("."));
+                timer::sleep(15_000);
+            }
+
             // restore as many stuff into the boot reset state as possible
             // as this deactivates MMU no atomic operations from here
             clean_up_for_reboot();
-
-            // do some arbitrary sleeping before the real re-boot...
-            timer::sleep(1_500_000);
 
             // based on the kernel mode we could either "re-boot" immidiately or
             // we need to switch to aarch32 mode
             match kernel.boot_mode {
                 64 => {
-                    // we can directly jump to the original __boot entry point as we do not change
-                    // the mode
                     unsafe { debug::lit_debug_led(20); }
                     extern "C" { fn __boot_64(addr: u64) -> !; }
                     __boot_64(kernel.boot_address);
                 }
                 32 => {
-                    // we need to perform an exeption level switch to be able to
-                    // enter aarch32 in HYP/EL2 mode
                     extern "C" { fn __boot_32(addr: u64) -> !; }
                     __boot_32(kernel.boot_address);
                 }
