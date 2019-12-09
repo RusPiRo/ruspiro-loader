@@ -21,7 +21,7 @@ matrix:
         - cargo install cargo-xbuild
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
-        - sudo chmod ugo+x dev-target/travis-build.sh
+        - sudo chmod ugo+x dev-target/build.sh
       script: cd dev-target && ./build.sh travis
 
     - name: "RusPiRo Test Kernel 64Bit"
@@ -39,5 +39,5 @@ matrix:
         - cargo install cargo-xbuild
         - rustup target add armv7-unknown-linux-gnueabihf
         - rustup component add rust-src
-        - sudo chmod ugo+x test-kernel/travis-build.sh
+        - sudo chmod ugo+x test-kernel/build.sh
       script: cd test-kernel && ./build.sh 32
