@@ -11,6 +11,7 @@ rust:
   - nightly
 
 matrix:
+  fast_finish: true
   include:
     - name: "RusPiRo Host App"
       script: cd dev-host && cargo build
@@ -31,7 +32,7 @@ matrix:
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
-      script: cd test-kernel && ./build.sh 64
+      script: cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml && ./build.sh 64
 
     - name: "RusPiRo Test Kernel 32Bit"
       install:
@@ -40,4 +41,5 @@ matrix:
         - rustup target add armv7-unknown-linux-gnueabihf
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
-      script: cd test-kernel && sed -i 's/path.*=.*\".*", //g' Cargo.toml && ./build.sh 32
+      # remove the path in the dependencies of the cargo file to ensure we use the version from crates.io
+      script: cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml && ./build.sh 32

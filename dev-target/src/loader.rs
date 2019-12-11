@@ -94,14 +94,6 @@ pub fn run() -> ! {
                 uart.send_string("re-boot in progress ...\r\n");
             });
 
-            UART.use_for(|uart| {
-                uart.send_string("re-booting with new kernel from ");
-                uart.send_hex(kernel.boot_address);
-                uart.send_string(" with size ");
-                uart.send_hex(kernel.binary.len() as u64);
-                uart.send_string("\r\n");
-            });
-
             // do some arbitrary sleeping before the real re-boot...
             // and print some "progressing points" to enable the host machine to
             // start a terminal program and connect via uart after the data has been transmitted
@@ -109,7 +101,16 @@ pub fn run() -> ! {
                 UART.use_for(|uart| uart.send_string("."));
                 timer::sleep(15_000);
             }
-
+/*
+            UART.use_for(|uart| {
+                uart.send_string("\r\nre-booting with new kernel from ");
+                uart.send_hex(kernel.boot_address);
+                uart.send_string(" with size ");
+                uart.send_hex(kernel.binary.len() as u64);
+                uart.send_string("\r\n");
+            });
+            timer::sleep(1_000_000);
+*/
             // restore as many stuff into the boot reset state as possible
             // as this deactivates MMU no atomic operations from here
             clean_up_for_reboot();

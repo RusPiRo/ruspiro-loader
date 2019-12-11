@@ -39,15 +39,16 @@ pub fn __rust_entry(core: u32) -> ! {
     let mut uart = Uart1::new();
     let _ = uart.initialize(250_000_000, 115_200);
     uart.send_string("\r\n########## RusPiRo ---------- Bootloader v1.0 ---------- ##########\r\n");
-
+       
+    // now initialize the interrupt manager
+    IRQ_MANAGER.take_for(|irq_mgr| irq_mgr.initialize());
+    
     // spend some time doing nothing as the followup entry point may want to re-initialize the
     // uart and this would interfere the current data transfer of the welcome string that might
     // not yet be finished...(from the device point of view)
     timer::sleep(200_000);
-    
-    // now initialize the interrupt manager
-    IRQ_MANAGER.take_for(|irq_mgr| irq_mgr.initialize());
-    
+    drop(uart); // release uart recources before calling the boot loader
+
     // now start the bootloader code
     loader::run();
 }

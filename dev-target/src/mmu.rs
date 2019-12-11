@@ -23,6 +23,9 @@ static mut MMU_CFG: MmuConfig = MmuConfig {
 };
 
 pub fn initialize_mmu(core: u32) {
+    // disable MMU before any configuration changes happen
+    disable_mmu();
+    
     // setup ttlb entries - this is only needed once on the main core
     // as all cores share the same physical memory
     if core == 0 {

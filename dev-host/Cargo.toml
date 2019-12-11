@@ -18,6 +18,7 @@ publish = false
 
 [[bin]]
 name = "ruspiro-push"
+path = "./src/main.rs"
 
 [dependencies]
 clap = "2.33"

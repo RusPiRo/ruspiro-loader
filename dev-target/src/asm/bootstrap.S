@@ -87,6 +87,7 @@ __boot:
  **************************************************************************************************/
 .section .text
 __boot_64:
+    //adr     x0, TestKernelAarch64
     // TODO: switch to EL1 need to be implemented, for the time beeing just call the new kernel
     br      x0
     b       __hang
