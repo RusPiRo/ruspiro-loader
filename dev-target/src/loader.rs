@@ -1,9 +1,9 @@
-/***********************************************************************************************************************
+/***************************************************************************************************
  * Copyright (c) 2019 by the authors
  *
  * Author: André Borrmann
  * License: Apache License 2.0
- **********************************************************************************************************************/
+ **************************************************************************************************/
 
 //! # Bootloader
 //!
@@ -11,6 +11,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
 
+use crate::mmu;
 use ruspiro_cache::*;
 use ruspiro_interrupt::*;
 use ruspiro_lock::*;
@@ -18,7 +19,6 @@ use ruspiro_register::system::*;
 use ruspiro_singleton::Singleton;
 use ruspiro_timer as timer;
 use ruspiro_uart::{InterruptType, Uart1};
-use crate::mmu;
 
 /// Define singleton Uart1 accessor to ensure safe access from main processing as well as
 /// from interrupt handler
@@ -44,6 +44,13 @@ impl Kernel {
             binary: data,
         }
     }
+}
+
+/// the external functions called for the "re-boot" in either aarch32 or aarch64 mode
+/// depending on the kernel received
+extern "C" {
+    fn __boot_64(addr: u64) -> !;
+    fn __boot_32(addr: u64) -> !;
 }
 
 /// Run the loader until a new kernel binary has been received and
@@ -77,59 +84,47 @@ pub fn run() -> ! {
         // when getting here the kernel binary has been fully received and the data prepared
         // in KERNEL. It's safe to access this here as the interrupt will no longer concurrently
         // access the same
+        let kernel = unsafe { KERNEL.take().unwrap() };
+        // copy the retrieved binary to the address it shall be executed from
         unsafe {
-            let kernel = KERNEL.take().unwrap();
-            // copy the retrieved binary to the address it shall be executed from
             core::ptr::copy_nonoverlapping(
                 kernel.binary.as_ptr(),
                 kernel.boot_address as *mut u8,
                 kernel.binary.len(),
             );
-            // after we copied the new kernel to the right memory address flush the caches to ensure
-            // the core sees the latest version of memory and instructions
-            flush_icache_range(kernel.boot_address, kernel.boot_address + kernel.binary.len() as u64);
-            cleaninvalidate();
-            
-            UART.use_for(|uart| {
-                uart.send_string("re-boot in progress ...\r\n");
-            });
+        }
+        // after we copied the new kernel to the right memory address flush the caches to ensure
+        // the core sees the latest version of memory and instructions
+        flush_icache_range(
+            kernel.boot_address,
+            kernel.boot_address + kernel.binary.len() as u64,
+        );
+        cleaninvalidate();
 
-            // do some arbitrary sleeping before the real re-boot...
-            // and print some "progressing points" to enable the host machine to
-            // start a terminal program and connect via uart after the data has been transmitted
-            for _ in 0..100 {
-                UART.use_for(|uart| uart.send_string("."));
-                timer::sleep(15_000);
-            }
-/*
-            UART.use_for(|uart| {
-                uart.send_string("\r\nre-booting with new kernel from ");
-                uart.send_hex(kernel.boot_address);
-                uart.send_string(" with size ");
-                uart.send_hex(kernel.binary.len() as u64);
-                uart.send_string("\r\n");
-            });
-            timer::sleep(1_000_000);
-*/
-            // restore as many stuff into the boot reset state as possible
-            // as this deactivates MMU no atomic operations from here
-            clean_up_for_reboot();
+        UART.use_for(|uart| {
+            uart.send_string("re-boot in progress ...\r\n");
+        });
 
-            // based on the kernel mode we could either "re-boot" immidiately or
-            // we need to switch to aarch32 mode
-            match kernel.boot_mode {
-                64 => {
-                    extern "C" { fn __boot_64(addr: u64) -> !; }
-                    __boot_64(kernel.boot_address);
-                }
-                32 => {
-                    extern "C" { fn __boot_32(addr: u64) -> !; }
-                    __boot_32(kernel.boot_address);
-                }
-                _ => {
-                    // well, whatever is requested we cannot handle this here...
-                    unimplemented!();
-                }
+        // do some arbitrary sleeping before the real re-boot...
+        // and print some "progressing points" to enable the host machine to
+        // start a terminal program and connect via uart after the data has been transmitted
+        for _ in 0..100 {
+            UART.use_for(|uart| uart.send_string("."));
+            timer::sleep(15_000);
+        }
+
+        // restore as many stuff into the boot reset state as possible
+        // as this deactivates MMU no atomic operations from here
+        clean_up_for_reboot();
+
+        // based on the kernel mode we could either "re-boot" immidiately or
+        // we need to switch to aarch32 mode
+        match kernel.boot_mode {
+            64 => unsafe { __boot_64(kernel.boot_address) },
+            32 => unsafe { __boot_32(kernel.boot_address) },
+            _ => {
+                // well, whatever is requested we cannot handle this here...
+                unimplemented!();
             }
         }
     }
@@ -138,9 +133,7 @@ pub fn run() -> ! {
 /// Do some clean up to reset as many as known used registers to their reset values which will make
 /// the re-boot from the bootloader compared to a usual cold boot on the device more predictable
 fn clean_up_for_reboot() {
-    // TODO: typically the Pi boots with MMU disabled, however,
-    // disabling it bevore the reboot has shown that the Pi hangs after re-enabling it.
-    // the root cause is unknown...
+    // typically the Pi boots with MMU disabled, so disabled it here before re-booting
     mmu::disable_mmu();
 }
 

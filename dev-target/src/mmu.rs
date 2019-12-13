@@ -25,7 +25,7 @@ static mut MMU_CFG: MmuConfig = MmuConfig {
 pub fn initialize_mmu(core: u32) {
     // disable MMU before any configuration changes happen
     disable_mmu();
-    
+
     // setup ttlb entries - this is only needed once on the main core
     // as all cores share the same physical memory
     if core == 0 {
@@ -77,10 +77,7 @@ pub fn initialize_mmu(core: u32) {
 
 pub fn disable_mmu() {
     // disabling the MMU will also disable data and instruction cache
-    sctlr_el2::write(
-        sctlr_el2::M::DISABLE 
-        | sctlr_el2::C::DISABLE 
-        | sctlr_el2::I::DISABLE);
+    sctlr_el2::write(sctlr_el2::M::DISABLE | sctlr_el2::C::DISABLE | sctlr_el2::I::DISABLE);
     // let 2 cycles pass with a nop to settle the MMU
     nop();
     nop();

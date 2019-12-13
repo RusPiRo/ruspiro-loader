@@ -16,4 +16,4 @@ all: kernel
 	cargo objcopy -- -O binary .\\target\\aarch64-unknown-linux-gnu\\release\\$< .\\target\\kernel8.img
 
 kernel:
-	cargo xbuild --target aarch64-unknown-linux-gnu --release --target-dir ./target/
+	cargo xbuild --target aarch64-unknown-linux-gnu --release

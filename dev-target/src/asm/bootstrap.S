@@ -9,7 +9,15 @@
  * 3. The current core is entering this code in EL2
  * 4. The start address of the entry point is 0x8_0000 which has to be ensured by the linker script
  * 5. The linker script also provides at least the following symbols:
- *
+ *  __stack_end__ 
+ *  __stack_top_EL3__
+ *  __stack_top_EL2__
+ *  __stack_top_EL1__ 
+ *  __stack_top_EL0__
+ *  __stack_top_core0__
+ *  __stack_top__
+ *  __heap_start
+ *  __heap_end
  *
  * Copyright (c) 2019 by the authors
  *
@@ -67,8 +75,6 @@ __boot:
     // as they usually are routet to EL1, but we keep running in EL2
     mrs     x0, hcr_el2
     orr     x0, x0, #(1 << 3 | 1 << 4 | 1 << 5) // route Abort, IRQ and FIQ to EL2
-    //movz    x1, #0x800, lsl #16 // route also TGE (1 << 27)
-    //orr     x0, x0, x1
     msr     hcr_el2, x0
 
     // now call rust code entry point.
@@ -87,11 +93,34 @@ __boot:
  **************************************************************************************************/
 .section .text
 __boot_64:
+    // TEST: provide built in kernel binary address
     //adr     x0, TestKernelAarch64
-    // TODO: switch to EL1 need to be implemented, for the time beeing just call the new kernel
-    br      x0
-    b       __hang
+    
+    msr     sctlr_el1, xzr  // initialize SCTRL_EL1 register before switching to EL1
+     // enable AArch64 when switching to EL1 (otherwise EL1 would be executed in aarch32)
+    mov     x1, #(1 << 31)      // AArch64
+    orr     x1, x1, #(1 << 1)   // SWIO hardwired on Pi3
+    msr     hcr_el2, x1
+    mrs     x1, hcr_el2
 
+	mrs     x2, cnthctl_el2 // enable CNTP for EL1
+    orr     x2, x2, #3
+    msr     cnthctl_el2, x2
+    msr     cntvoff_el2, xzr
+
+    // set the SPSR_EL2 to a valid value before returning to EL1
+    // this would have been usually set when capturing an exception from EL1 to EL2
+    // as we would like to return we set the values as we would like to find them
+    // configured once we are in EL1
+    mov     x2, #(0b0101 << 0 | /* M[3:0] exception taken from El1h  */ \
+                  0 << 4 | /* exception taken from aarch64 */ \
+                  1 << 6 | /* mask FIQ */ \
+                  1 << 7 | /* Mask IRQ */ \
+                  1 << 8 | /* Mask Abort */ \
+                  1 << 9)  /* Mask Debug */
+    msr     spsr_el2, x2
+    msr     elr_el2, x0
+    eret    // return from EL2 -> EL1 and never come back
 
 /***************************************************************************************************
  * run an aarch32 kernel image from within aarch64 mode.
@@ -101,6 +130,17 @@ __boot_64:
  **************************************************************************************************/
 .section .text
 __boot_32:
+/*
+    // TEST BEGIN: copy embedded kernel to 0x8000
+    adr     x1, TestKernelAarch32
+    mov     x0, #0x8000
+    adr     x3, TestKernelAarch32_end
+    sub     x2, x3, x1
+    bl      memcpy
+    mov     x0, #0x8000
+    // TEST END
+*/
+
     // to boot into aarch32 return from EL2 into EL1 to switch the architecture mode
     msr     elr_el2, x0 // eret return address is the 32Bit kernel image given to this function
     
@@ -113,8 +153,12 @@ __boot_32:
     orr     x1, x1, x2
     msr     spsr_el2, x1
 
-    eret    // return to EL1 - we should never come back here   
+    // before returning to EL1 also ensure that interrupts are no longer routet to EL2
+    mrs     x0, hcr_el2
+    bic     x0, x0, #(1 << 3 | 1 << 4 | 1 << 5) // don't route Abort, IRQ and FIQ to EL2
+    msr     hcr_el2, x0
 
+    eret    // return to EL1 - we should never come back here   
 
 /***************************************************************************************************
  * savely hang the core
@@ -127,22 +171,11 @@ __boot_32:
     wfe
     b   __hang
 
-/*******************************************************************************
- *
- *******************************************************************************/
-.section .rodata
-.global TestKernelAarch32
-.balign 0x4000
-TestKernelAarch32:
-.incbin "../test-kernel/target/kernel7.img"
-.global TestKernelAarch32_end
-TestKernelAarch32_end:
-.byte 0
 
 /*******************************************************************************
- *
+ * Test kernel built-in binary
  *******************************************************************************/
-.section .rodata
+/*.section .rodata
 .global TestKernelAarch64
 .balign 0x4000
 TestKernelAarch64:
@@ -150,3 +183,4 @@ TestKernelAarch64:
 .global TestKernelAarch64_end
 TestKernelAarch64_end:
 .byte 0
+*/

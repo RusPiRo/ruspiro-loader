@@ -83,9 +83,11 @@ SECTIONS
  * Those symbols map to a default implementation as long as no real implementation is found in the compile
  * stage
  */
+ /*
 PROVIDE(__undefined_instruction_h = __exception_handler_Default);
 PROVIDE(__software_interrupt_h = __interrupt_handler_Default);
 PROVIDE(__prefetch_abort_h = __exception_handler_Default);
 PROVIDE(__data_abort_h = __exception_handler_Default);
 PROVIDE(__interrupt_h = __interrupt_handler_Default);
 PROVIDE(__fast_interrupt_h = __interrupt_handler_Default);
+*/
