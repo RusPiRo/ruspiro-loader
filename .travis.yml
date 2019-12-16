@@ -23,7 +23,8 @@ matrix:
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
         - sudo chmod ugo+x dev-target/build.sh
-      script: cd dev-target && sed -i 's/path.*=.*\".*", //g' Cargo.toml && ./build.sh travis
+        - cd dev-target && sed -i 's/path.*=.*\".*", //g' Cargo.toml
+      script: cd dev-target && ./build.sh travis
 
     - name: "RusPiRo Test Kernel 64Bit"
       install:
