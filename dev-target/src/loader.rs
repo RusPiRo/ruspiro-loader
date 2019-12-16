@@ -9,10 +9,11 @@
 //!
 
 extern crate alloc;
+extern crate ruspiro_allocator;
 use alloc::vec::Vec;
 
 use crate::mmu;
-use ruspiro_cache::*;
+use ruspiro_cache as cache;
 use ruspiro_interrupt::*;
 use ruspiro_lock::*;
 use ruspiro_register::system::*;
@@ -70,6 +71,8 @@ pub fn run() -> ! {
     UART.use_for(|uart| {
         uart.send_string("waiting for a new kernel...\r\n");
     });
+    
+    //test_call();
 
     loop {
         // to safe power sleep the core until an event eg. interrupt arrises
@@ -93,13 +96,9 @@ pub fn run() -> ! {
                 kernel.binary.len(),
             );
         }
-        // after we copied the new kernel to the right memory address flush the caches to ensure
-        // the core sees the latest version of memory and instructions
-        flush_icache_range(
-            kernel.boot_address,
-            kernel.boot_address + kernel.binary.len() as u64,
-        );
-        cleaninvalidate();
+        // after we copied the new kernel to the right memory address clean and invalidate the
+        // caches to ensure the core sees the latest version of memory and instructions
+        cache::cleaninvalidate();
 
         UART.use_for(|uart| {
             uart.send_string("re-boot in progress ...\r\n");
@@ -115,7 +114,7 @@ pub fn run() -> ! {
 
         // restore as many stuff into the boot reset state as possible
         // as this deactivates MMU no atomic operations from here
-        clean_up_for_reboot();
+        clean_up_for_reboot(kernel.boot_mode);
 
         // based on the kernel mode we could either "re-boot" immidiately or
         // we need to switch to aarch32 mode
@@ -132,9 +131,14 @@ pub fn run() -> ! {
 
 /// Do some clean up to reset as many as known used registers to their reset values which will make
 /// the re-boot from the bootloader compared to a usual cold boot on the device more predictable
-fn clean_up_for_reboot() {
+fn clean_up_for_reboot(boot_mode: u32) {
     // typically the Pi boots with MMU disabled, so disabled it here before re-booting
-    mmu::disable_mmu();
+    // however, disabling MMU in EL2 when switching to aarch32 has shown that the re-boot
+    // process will hang for an unknown reason, so keep it active in aarch32 target boot as this
+    // seem to work as expected...
+    if boot_mode != 32 {
+        mmu::disable_mmu();
+    }
 }
 
 /// Interrupt handler for the UART1 being triggered once new data was received
@@ -200,4 +204,20 @@ fn uart_handler() {
             }
         }
     });
+}
+
+
+fn test_call() {
+    // do some arbitrary sleeping before the real re-boot...
+    // and print some "progressing points" to enable the host machine to
+    // start a terminal program and connect via uart after the data has been transmitted
+    for _ in 0..100 {
+        UART.use_for(|uart| uart.send_string("."));
+        timer::sleep(15_000);
+    }
+
+    // restore as many stuff into the boot reset state as possible
+    // as this deactivates MMU no atomic operations from here
+    clean_up_for_reboot(32);
+    unsafe {__boot_32(0x0) };
 }

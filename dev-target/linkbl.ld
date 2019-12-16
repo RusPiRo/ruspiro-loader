@@ -63,6 +63,12 @@ SECTIONS
 	 *********************************************************************************/
 	. = ALIGN(16);
 	__stack_end__ = .;
+	. += 0x04000;
+	__stack_top_core3__ = .;
+	. += 0x04000;
+	__stack_top_core2__ = .;
+	. += 0x04000;
+	__stack_top_core1__ = .;
 	. += 0x01000;
 	__stack_top_EL3__ = .;
 	. += 0x01000;
@@ -72,6 +78,7 @@ SECTIONS
 	. += 0x01000;
 	__stack_top_EL0__ = .;
 	__stack_top_core0__ = .;
+	
 	__stack_top__ = .;
 	/* the heap memory address space starts where the executable and the static variables ends
 	 * (aligned to 4kB to fit into a MMU page)

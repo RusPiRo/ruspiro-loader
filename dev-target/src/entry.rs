@@ -6,7 +6,7 @@
  **********************************************************************************************************************/
 #![no_std]
 #![no_main]
-#![feature(asm, lang_items)]
+#![feature(asm, lang_items, linkage)]
 
 //! # Rust entry point
 //! This part is called immediately after the bootstrap has done its minimal preparation work to
@@ -16,6 +16,7 @@
 mod loader;
 pub mod mmu;
 mod panic;
+mod stubs;
 
 use ruspiro_interrupt::IRQ_MANAGER;
 use ruspiro_timer as timer;

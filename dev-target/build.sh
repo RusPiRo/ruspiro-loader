@@ -22,5 +22,5 @@ if [ -z "$1" ]
         export AR='aarch64-elf-ar'
 fi
 
-cargo xbuild --target aarch64-unknown-linux-gnu --release 
+cargo xbuild --target aarch64-unknown-linux-gnu --release --target-dir ./target/
 cargo objcopy -- -O binary ./target/aarch64-unknown-linux-gnu/release/kernel ./target/kernel8.img
