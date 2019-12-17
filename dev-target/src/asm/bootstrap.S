@@ -10,6 +10,9 @@
  * 4. The start address of the entry point is 0x8_0000 which has to be ensured by the linker script
  * 5. The linker script also provides at least the following symbols:
  *  __stack_end__ 
+ *  __stack_top_core3__
+ *  __stack_top_core2__
+ *  __stack_top_core1__
  *  __stack_top_EL3__
  *  __stack_top_EL2__
  *  __stack_top_EL1__ 
@@ -95,17 +98,6 @@ __boot:
  **************************************************************************************************/
 .section .text
 __boot_64:
-/*
-    cbnz    x0, .go
-    adr     x1, TestKernel
-    mov     x0, #0x80000
-    adr     x3, TestKernel_end
-    sub     x2, x3, x1
-    bl      memcpy
-    bl      __cleaninvalidate_dcache
-    mov     x0, #0x80000
-.go:
-*/
     msr     sctlr_el1, xzr  // initialize SCTRL_EL1 register before switching to EL1
      // enable AArch64 when switching to EL1 (otherwise EL1 would be executed in aarch32)
     mov     x2, #(1 << 31)      // AArch64
@@ -202,23 +194,6 @@ __switch_and_park_secondary_cores_64:
  **************************************************************************************************/
 .section .text
 __boot_32:
-/*
-    // TEST BEGIN: copy embedded kernel to 0x8000
-    cbz     x0, .copy
-    cmp     x0, #0x80000
-    bne     .go32
-.copy:
-    adr     x1, TestKernel
-    mov     x0, #0x8000
-    adr     x3, TestKernel_end
-    sub     x2, x3, x1
-    bl      memcpy
-    bl      __cleaninvalidate_dcache
-    mov     x0, #0x8000
-.go32:    
-    // TEST END
-*/
-
     // to boot into aarch32 return from EL2 into EL1 to switch the architecture mode
     msr     elr_el2, x0 // eret return address is the 32Bit kernel image given to this function
     // configure spsr_el2 and hcr_el2 to ensure we are returning to EL1(SYS)/aarch32
@@ -318,19 +293,3 @@ __switch_and_park_secondary_cores_32:
  __hang:
     wfe
     b   __hang
-
-
-
-/*******************************************************************************
- * Test kernel built-in binary
- *******************************************************************************/
-/*
-.section .rodata
-.global TestKernel
-.balign 0x4000
-TestKernel:
-.incbin "../test-kernel/target/kernel7.img"
-.global TestKernel_end
-TestKernel_end:
-.byte 0
-*/

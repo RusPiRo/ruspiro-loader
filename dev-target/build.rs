@@ -12,21 +12,16 @@ extern crate cc;
 use std::env;
 
 fn main() {
-    match env::var_os("CARGO_CFG_TARGET_ARCH") {
-        Some(target_arch) => {
-            if env::var_os("CARGO_FEATURE_RUSPIRO_PI3").is_some() {
-                if target_arch == "aarch64" {
-                    cc::Build::new()
-                        .file("src/asm/bootstrap.S")
-                        .flag("-march=armv8-a")
-                        .compile("bootstrap");
-                    cc::Build::new()
-                        .file("src/asm/exceptionvector.S")
-                        .flag("-march=armv8-a")
-                        .compile("excvector");
-                }
-            }
+    if let Some(target_arch) = env::var_os("CARGO_CFG_TARGET_ARCH") {
+        if env::var_os("CARGO_FEATURE_RUSPIRO_PI3").is_some() && target_arch == "aarch64" {
+            cc::Build::new()
+                .file("src/asm/bootstrap.S")
+                .flag("-march=armv8-a")
+                .compile("bootstrap");
+            cc::Build::new()
+                .file("src/asm/exceptionvector.S")
+                .flag("-march=armv8-a")
+                .compile("excvector");
         }
-        _ => (),
     }
 }

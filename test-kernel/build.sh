@@ -33,8 +33,8 @@ elif [ $1 = "32" ]
         export RUSTFLAGS='-C linker=arm-eabi-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+v8,+vfp3,+d16,+thumb2,+neon -C link-arg=-nostartfiles -C link-arg=-T./link32.ld -C opt-level=3 -C debuginfo=0'
         if [ -z "$3" ]
             then
-                export CC='arm-eabi-gcc.exe'
-                export AR='arm-eabi-ar.exe'
+                export CC='arm-eabi-gcc'
+                export AR='arm-eabi-ar'
         fi
         cargo xbuild --target armv7-unknown-linux-gnueabihf --release --bin kernel --target-dir ./target/
         cargo objcopy -- -O binary ./target/armv7-unknown-linux-gnueabihf/release/kernel ./target/kernel7.img

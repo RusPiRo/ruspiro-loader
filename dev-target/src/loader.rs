@@ -71,8 +71,6 @@ pub fn run() -> ! {
     UART.use_for(|uart| {
         uart.send_string("waiting for a new kernel...\r\n");
     });
-    
-    //test_call();
 
     loop {
         // to safe power sleep the core until an event eg. interrupt arrises
@@ -204,20 +202,4 @@ fn uart_handler() {
             }
         }
     });
-}
-
-
-fn test_call() {
-    // do some arbitrary sleeping before the real re-boot...
-    // and print some "progressing points" to enable the host machine to
-    // start a terminal program and connect via uart after the data has been transmitted
-    for _ in 0..100 {
-        UART.use_for(|uart| uart.send_string("."));
-        timer::sleep(15_000);
-    }
-
-    // restore as many stuff into the boot reset state as possible
-    // as this deactivates MMU no atomic operations from here
-    clean_up_for_reboot(32);
-    unsafe {__boot_32(0x0) };
 }

@@ -44,15 +44,23 @@ pub fn init(core: u32) {
 
     UART1.take_for(|uart| {
         uart.send_string(
-            alloc::format!("########## RusPiRo ---- Kernel initialization: core {} ---- ##########\r\n", core).as_str(),
+            alloc::format!(
+                "########## RusPiRo ---- Kernel initialization: core {} ---- ##########\r\n",
+                core
+            )
+            .as_str(),
         );
     });
 }
 
-pub fn run(core: u32) -> ! {    
+pub fn run(core: u32) -> ! {
     UART1.take_for(|uart| {
         uart.send_string(
-            alloc::format!("########## RusPiRo ------- Kernel mainloop: core {} ------- ##########\r\n", core).as_str(),
+            alloc::format!(
+                "########## RusPiRo ------- Kernel mainloop: core {} ------- ##########\r\n",
+                core
+            )
+            .as_str(),
         )
     });
 
@@ -88,7 +96,7 @@ fn timer_handler() {
         gpio.get_pin(18).unwrap().to_output().toggle();
         // free the pin for the next usage when the handler is called
         // this does not change the device state of the pin
-        gpio.free_pin(18); 
+        gpio.free_pin(18);
     });*/
 }
 

@@ -24,7 +24,7 @@ matrix:
         - rustup component add rust-src
         - sudo chmod ugo+x dev-target/build.sh
         - cd dev-target && sed -i 's/path.*=.*\".*", //g' Cargo.toml
-      script: cd dev-target && ./build.sh travis
+      script: ./build.sh travis
 
     - name: "RusPiRo Test Kernel 64Bit"
       install:
@@ -33,7 +33,8 @@ matrix:
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
-      script: cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml && ./build.sh 64
+        - cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml
+      script: ./build.sh 64 build travis
 
     - name: "RusPiRo Test Kernel 32Bit"
       install:
@@ -42,5 +43,6 @@ matrix:
         - rustup target add armv7-unknown-linux-gnueabihf
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
+        - cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml
       # remove the path in the dependencies of the cargo file to ensure we use the version from crates.io
-      script: cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml && ./build.sh 32
+      script:  ./build.sh 32 build travis
