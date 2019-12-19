@@ -11,6 +11,8 @@ categories = ["no-std", "embedded"]
 edition = "2018"
 publish = false
 
+[workspace]
+
 # keep either bin or lib
 [[bin]]
 name = "kernel"
