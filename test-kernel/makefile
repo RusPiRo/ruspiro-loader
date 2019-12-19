@@ -9,7 +9,7 @@
 #******************************************************************
 
 deploy32: all32
-	../dev-host/target/release/ruspiro-push -k .\\target\\kernel7.img -p COM5
+	cargo ruspiro-push -k .\\target\\kernel7.img -p COM5
 	ttermpro /C=5 /BAUD=115200
 
 all32: export CFLAGS = -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53
@@ -24,7 +24,7 @@ kernel7:
 
 
 deploy64: all64
-	../dev-host/target/release/ruspiro-push -k .\\target\\kernel8.img -p COM5
+	cargo ruspiro-push -k .\\target\\kernel8.img -p COM5
 	ttermpro /C=5 /BAUD=115200
 
 all64: export CFLAGS = -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53

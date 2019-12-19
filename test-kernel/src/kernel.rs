@@ -7,20 +7,13 @@
 #![no_std]
 #![no_main]
 
-extern crate alloc;
-extern crate ruspiro_allocator;
+#[macro_use]
 extern crate ruspiro_boot;
+extern crate ruspiro_allocator;
 
-use ruspiro_boot::*;
 use ruspiro_gpio::*;
 use ruspiro_interrupt::*;
 use ruspiro_register::define_mmio_register;
-use ruspiro_singleton::*;
-use ruspiro_uart::Uart1;
-
-use ruspiro_gpio::debug::lit_debug_led;
-
-static UART1: Singleton<Uart1> = Singleton::new(Uart1::new());
 
 come_alive_with!(init);
 run_with!(run);
@@ -35,34 +28,17 @@ pub fn init(core: u32) {
         _ => (),
     }
 
-    if core == 0 {
-        // initialize the UART only on core 0
-        UART1.take_for(|uart| {
-            let _ = uart.initialize(250_000_000, 115_200);
-        });
-    }
-
-    UART1.take_for(|uart| {
-        uart.send_string(
-            alloc::format!(
-                "########## RusPiRo ---- Kernel initialization: core {} ---- ##########\r\n",
-                core
-            )
-            .as_str(),
-        );
-    });
+    println!(
+        "########## RusPiRo ---- Kernel initialization: core {} ---- ##########",
+        core
+    );
 }
 
 pub fn run(core: u32) -> ! {
-    UART1.take_for(|uart| {
-        uart.send_string(
-            alloc::format!(
-                "########## RusPiRo ------- Kernel mainloop: core {} ------- ##########\r\n",
-                core
-            )
-            .as_str(),
-        )
-    });
+    println!(
+        "########## RusPiRo ------- Kernel mainloop: core {} ------- ##########",
+        core
+    );
 
     if core == 0 {
         // setup the system timer to let a LED blink based on timer interrupts
@@ -89,7 +65,7 @@ pub fn run(core: u32) -> ! {
 fn timer_handler() {
     // first thing - acknowladge the timer interrupt
     TIMERACKN::Register.set(0x1);
-    UART1.use_for(|uart| uart.send_string("timer..."));
+    print!("timer...");
     // using blocking [take_for] is safe here inside the IRQ handler as this is the only code line
     // accessing the GPIO in this test kernel
     /*GPIO.take_for(|gpio| {

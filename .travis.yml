@@ -13,9 +13,6 @@ rust:
 matrix:
   fast_finish: true
   include:
-    - name: "RusPiRo Host App"
-      script: cd dev-host && cargo build
-
     - name: "RusPiRo Loader Kernel"
       install:
         - sudo apt-get install gcc-aarch64-linux-gnu gcc-aarch64-linux-gnu
@@ -23,7 +20,7 @@ matrix:
         - rustup target add aarch64-unknown-linux-gnu
         - rustup component add rust-src
         - sudo chmod ugo+x dev-target/build.sh
-        - cd dev-target && sed -i 's/path.*=.*\".*", //g' Cargo.toml
+        - sed -i 's/path.*=.*\".*", //g' Cargo.toml
       script: ./build.sh travis
 
     - name: "RusPiRo Test Kernel 64Bit"
@@ -44,5 +41,4 @@ matrix:
         - rustup component add rust-src
         - sudo chmod ugo+x test-kernel/build.sh
         - cd test-kernel && sed -i 's/path.*=.*\".*", version/version/g' Cargo.toml
-      # remove the path in the dependencies of the cargo file to ensure we use the version from crates.io
       script:  ./build.sh 32 build travis
