@@ -27,7 +27,7 @@ if [ $1 = "64" ]
                 # after build deploy to device using serial port
                 if [ "$2" = "deploy" ]
                     then
-                        ../dev-host/target/release/ruspiro-push -k ./target/kernel8.img -p COM5
+                        cargo ruspiro-push -k ./target/kernel8.img -p COM5
                 fi
         fi
 elif [ $1 = "32" ]
@@ -48,7 +48,7 @@ elif [ $1 = "32" ]
                 # after build deploy to device using serial port
                 if [ "$2" = "deploy" ]
                     then
-                        ../dev-host/target/release/ruspiro-push -k ./target/kernel7.img -p COM5
+                        cargo ruspiro-push -k ./target/kernel7.img -p COM5
                 fi
         fi
 else
