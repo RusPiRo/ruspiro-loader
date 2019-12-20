@@ -8,10 +8,6 @@
 # License: Apache License 2.0
 #******************************************************************
 
-deploy32: all32
-	cargo ruspiro-push -k .\\target\\kernel7.img -p COM5
-	ttermpro /C=5 /BAUD=115200
-
 all32: export CFLAGS = -mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53
 all32: export RUSTFLAGS = -C linker=arm-eabi-gcc.exe -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+v8,+vfp3,+d16,+thumb2,+neon -C link-arg=-nostartfiles -C link-arg=-T./link32.ld -C opt-level=3 -C debuginfo=0
 all32: export CC = arm-eabi-gcc.exe
@@ -21,11 +17,6 @@ all32: kernel7
 
 kernel7:
 	cargo xbuild --target armv7-unknown-linux-gnueabihf --release --bin kernel --target-dir ./target/
-
-
-deploy64: all64
-	cargo ruspiro-push -k .\\target\\kernel8.img -p COM5
-	ttermpro /C=5 /BAUD=115200
 
 all64: export CFLAGS = -march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53
 all64: export RUSTFLAGS = -C linker=aarch64-elf-gcc -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-nostartfiles -C link-arg=-T./link64.ld -C opt-level=3 -C debuginfo=0
