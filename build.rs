@@ -24,4 +24,6 @@ fn main() {
                 .compile("excvector");
         }
     }
+
+    println!("cargo:rerun-if-changed=linkbl.ld");
 }

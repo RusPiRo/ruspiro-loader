@@ -6,7 +6,7 @@
  **********************************************************************************************************************/
 #![no_std]
 #![no_main]
-#![feature(asm, lang_items, linkage)]
+#![feature(llvm_asm, lang_items, linkage)]
 
 //! # Rust entry point
 //! This part is called immediately after the bootstrap has done its minimal preparation work to
@@ -14,13 +14,13 @@
 //!
 
 mod loader;
-pub mod mmu;
 mod panic;
 mod stubs;
 
 use ruspiro_interrupt::IRQ_MANAGER;
 use ruspiro_timer as timer;
 use ruspiro_uart::Uart1;
+use ruspiro_mmu as mmu;
 
 /// Entry point that is called by the bootstrapping code.
 ///
@@ -47,7 +47,7 @@ pub fn __rust_entry(core: u32) -> ! {
     // spend some time doing nothing as the followup entry point may want to re-initialize the
     // uart and this would interfere the current data transfer of the welcome string that might
     // not yet be finished...(from the device point of view)
-    timer::sleep(200_000);
+    timer::sleep(timer::Useconds(200_000));
     drop(uart); // release uart recources before calling the boot loader
 
     // now start the bootloader code

@@ -60,7 +60,7 @@ pub fn run() -> ! {
     // Initialize the Uart1
     UART.take_for(|uart| {
         let _ = uart.initialize(250_000_000, 115_200);
-        uart.send_string("prepare boot loader\r\n");
+        uart.send_string("prepare boot loader...\r\n");
         uart.enable_interrupts(InterruptType::Receive);
     });
 
@@ -69,12 +69,13 @@ pub fn run() -> ! {
     enable_interrupts();
 
     UART.use_for(|uart| {
+        uart.send_string("waiting ...\r\n");
+        uart.send_string(alloc::format!("Sema at {:#x?}\r\n", &KERNEL_LOADED as *const Semaphore).as_str());
         uart.send_string("waiting for a new kernel...\r\n");
     });
+    
 
     loop {
-        // to safe power sleep the core until an event eg. interrupt arrises
-        wfe();
         // wait until the interrupt has signaled that the data has arrived
         KERNEL_LOADED.down();
         disable_interrupts();
@@ -87,6 +88,14 @@ pub fn run() -> ! {
         // access the same
         let kernel = unsafe { KERNEL.take().unwrap() };
         // copy the retrieved binary to the address it shall be executed from
+        UART.use_for(|uart| {
+            uart.send_string(
+                alloc::format!("copy kernel from {:#x?} to {:#x?}\r\n",
+                    kernel.binary.as_ptr(),
+                    kernel.boot_address as *mut u8,
+                ).as_str()
+            );
+        });
         unsafe {
             core::ptr::copy_nonoverlapping(
                 kernel.binary.as_ptr(),
@@ -94,6 +103,7 @@ pub fn run() -> ! {
                 kernel.binary.len(),
             );
         }
+        
         // after we copied the new kernel to the right memory address clean and invalidate the
         // caches to ensure the core sees the latest version of memory and instructions
         cache::cleaninvalidate();
@@ -107,7 +117,7 @@ pub fn run() -> ! {
         // start a terminal program and connect via uart after the data has been transmitted
         for _ in 0..100 {
             UART.use_for(|uart| uart.send_string("."));
-            timer::sleep(15_000);
+            timer::sleep(timer::Useconds(15_000));
         }
 
         // restore as many stuff into the boot reset state as possible

@@ -18,20 +18,23 @@ path = "./src/entry.rs"
 cc = "1.0"
 
 [dependencies]
-ruspiro-register = { path = "../register", version = "0.3" }
-ruspiro-gpio = { path = "../gpio", version = "0.3" }
-ruspiro-interrupt = { path = "../interrupt", version = "0.3" }
-ruspiro-uart = { path = "../uart", version = "0.3" }
-ruspiro-singleton = { path = "../singleton", version =" 0.3" }
-ruspiro-lock = { path = "../lock", version = "0.3" }
-ruspiro-timer = { path = "../timer", version = "0.3" }
-ruspiro-cache = { path = "../cache", version = "0.3" }
-ruspiro-allocator = { path = "../allocator", version ="0.3" }
+ruspiro-register = "0.4"
+ruspiro-mmu = { path = "../mmu"}
+ruspiro-interrupt = "0.3"
+ruspiro-uart = "0.3"
+ruspiro-singleton = "0.3"
+ruspiro-lock = "0.3"
+ruspiro-timer = "0.4"
+ruspiro-cache = "0.3"
+ruspiro-allocator = "0.4"
 
 [features]
 default = ["ruspiro_pi3"]
 ruspiro_pi3 = [
-    "ruspiro-gpio/ruspiro_pi3",
     "ruspiro-uart/ruspiro_pi3",
-    "ruspiro-interrupt/ruspiro_pi3"
+    "ruspiro-interrupt/ruspiro_pi3",
+    "ruspiro-timer/ruspiro_pi3"
 ]
+
+[patch.crates-io]
+ruspiro-allocator = { path = "../allocator" }

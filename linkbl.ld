@@ -20,10 +20,12 @@ SECTIONS
 	/**************************************************************************************************************
 	 * ensure running code waiting for new kernel is far enough in the memory to allow switching the boot part
 	 * starting from 0x80000 (aarch64) or 0x8000 (aarch32) on the fly.
-	 * The kernel to be loaded should always be smaller as this value!!!!!
-	 * So the actual new kernel need to be less than 512kB
+	 * The kernel to be loaded including all dynamically allocated memory until all cores has been kicked off
+	 * should always be smaller as this value!!!!!
+	 * So the actual new kernel need to be less than 960kB
 	 **************************************************************************************************************/
-	. += 0x80000;
+	/*. += 0xF0000; */
+	. += 0xE0000;
     .text : {  *(.text*) }
     .rodata : { *(.rodata*) }
     .data : { *(.data*) }
