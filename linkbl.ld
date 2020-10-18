@@ -23,7 +23,7 @@ SECTIONS
 	 * The kernel to be loaded should always be smaller as this value!!!!!
 	 * So the actual new kernel need to be less than 512kB
 	 **************************************************************************************************************/
-	. += 0x80000;
+	. += 0x90000;
     .text : {  *(.text*) }
     .rodata : { *(.rodata*) }
     .data : { *(.data*) }

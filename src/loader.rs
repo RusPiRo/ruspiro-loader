@@ -99,17 +99,11 @@ pub fn run() -> ! {
         cache::invalidate();
 
         UART.use_for(|uart| {
-            uart.send_string("re-boot in progress ...\r\n");
+            uart.send_string(
+                alloc::format!("re-boot in progress ... mode {}\r\n", kernel.boot_mode).as_str()
+            );
         });
-
-        // do some arbitrary sleeping before the real re-boot...
-        // and print some "progressing points" to enable the host machine to
-        // start a terminal program and connect via uart after the data has been transmitted
-        for _ in 0..100 {
-            UART.use_for(|uart| uart.send_string("."));
-            timer::sleep(timer::Useconds(15_000));
-        }
-
+        
         // restore as many stuff into the boot reset state as possible
         // as this deactivates MMU no atomic operations from here
         clean_up_for_reboot(kernel.boot_mode);

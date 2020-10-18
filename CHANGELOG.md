@@ -10,4 +10,4 @@
 
 - ### :bulb: Features
 
-    This is the initial release of the boot loader
+    This is the initial release of the boot loader.

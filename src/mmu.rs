@@ -83,7 +83,7 @@ pub fn disable_mmu() {
     nop();
     // as we have switched of the MMU we might also invalidate all TTLB entries
     unsafe {
-        asm!(
+        llvm_asm!(
             "dsb sy                   
              isb"
         )
@@ -123,7 +123,7 @@ fn setup_page_tables() {
             MMU_CFG.ttlb_lvl1[i] = (i as u64 * 0x20_0000) | 0x400 | 0b01;
         }
 
-        asm!(
+        llvm_asm!(
             "dsb   ishst
              tlbi  alle2is"
         );
