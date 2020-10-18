@@ -1,0 +1,20 @@
+[env]
+CC = "aarch64-none-elf-gcc"
+AR = "aarch64-none-elf-gcc"
+CFLAGS = "-march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53"
+RUSTFLAGS = "-C linker=aarch64-none-elf-gcc -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-T./linkbl.ld"
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release", "--target",  "aarch64-unknown-linux-gnu", "--features", "${FEATURES}"]
+
+[tasks.kernel]
+command = "aarch64-none-elf-objcopy"
+args = ["-O", "binary", "./target/aarch64-unknown-linux-gnu/release/kernel", "./target/kernel8.img"]
+dependencies = [
+    "build"
+]
+
+[tasks.pi3]
+env = { FEATURES = "ruspiro_pi3" }
+run_task = "kernel"

@@ -13,6 +13,8 @@
 //! allow branching into rust code line
 //!
 
+extern crate rlibc;
+
 mod loader;
 pub mod mmu;
 mod panic;
@@ -47,7 +49,7 @@ pub fn __rust_entry(core: u32) -> ! {
     // spend some time doing nothing as the followup entry point may want to re-initialize the
     // uart and this would interfere the current data transfer of the welcome string that might
     // not yet be finished...(from the device point of view)
-    timer::sleep(200_000);
+    timer::sleep(timer::Useconds(200_000));
     drop(uart); // release uart recources before calling the boot loader
 
     // now start the bootloader code

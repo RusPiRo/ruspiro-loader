@@ -96,7 +96,7 @@ pub fn run() -> ! {
         }
         // after we copied the new kernel to the right memory address clean and invalidate the
         // caches to ensure the core sees the latest version of memory and instructions
-        cache::cleaninvalidate();
+        cache::invalidate();
 
         UART.use_for(|uart| {
             uart.send_string("re-boot in progress ...\r\n");
@@ -107,7 +107,7 @@ pub fn run() -> ! {
         // start a terminal program and connect via uart after the data has been transmitted
         for _ in 0..100 {
             UART.use_for(|uart| uart.send_string("."));
-            timer::sleep(15_000);
+            timer::sleep(timer::Useconds(15_000));
         }
 
         // restore as many stuff into the boot reset state as possible

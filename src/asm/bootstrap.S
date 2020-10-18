@@ -138,13 +138,13 @@ __boot_64:
     str     x23, [x22, #8]  // core 1 (0xE0)
     str     x23, [x22, #16] // core 2 (0xE8)
     str     x23, [x22, #24] // core 3 (0xF0)
-    bl      __cleaninvalidate_dcache // ensure the other cores get the memory update
+    bl      __invalidate_dcache // ensure the other cores get the memory update
                                      // by clearing/invalidating the cache
     sev     // now wake up all the other cores
     // the secondary cores will clear their jump address and park after they have been switched to
     // EL1, so wait here until all other cores are parked
 .wait_secondary_el1_64:
-    bl      __cleaninvalidate_dcache // ensure we are not reading the old value from the cache
+    bl      __invalidate_dcache // ensure we are not reading the old value from the cache
     ldr     x0, [x22, #8] // check core 1
     cbnz    x0, .wait_secondary_el1_64
     ldr     x0, [x22, #16] // check core 2

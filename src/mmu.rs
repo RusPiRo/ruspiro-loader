@@ -46,7 +46,7 @@ pub fn initialize_mmu(core: u32) {
     // set the ttlb base address, this is where the memory address translation
     // table walk starts
     let ttlb_base = unsafe { (&MMU_CFG.ttlb_lvl0[0] as *const u64) as u64 };
-    ttbr0_el2::write(ttbr0_el2::baddr::with_value(ttlb_base));
+    ttbr0_el2::write(ttbr0_el2::BADDR::with_value(ttlb_base));
 
     // configure the TTLB attributes
     tcr_el2::write(
