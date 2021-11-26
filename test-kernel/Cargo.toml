@@ -5,13 +5,13 @@ version = "0.0.1" # remember to update html_root_url
 description = """
 Simple test kernel for the boot loader
 """
-license = "Apache-2.0"
+license = "Apache-2.0 OR MIT"
 keywords = ["RusPiRo", "baremetal", "raspberrypi", "bootloader", "test-kernel"]
 categories = ["no-std", "embedded"]
 edition = "2018"
 publish = false
 
-[workspace]
+#[workspace]
 
 # keep either bin or lib
 [[bin]]
@@ -22,17 +22,19 @@ path = "./src/kernel.rs"
 cc = "1.0"
 
 [dependencies]
-ruspiro-boot = { path = "../../boot", version = "0.3" }#, features = ["singlecore"] }
-ruspiro-allocator = { path = "../../allocator", version = "0.3" }
-ruspiro-gpio = { path = "../../gpio", version = "0.3" }
-ruspiro-singleton = { path = "../../singleton", version = "0.3" }
-ruspiro-interrupt = { path = "../../interrupt", version = "0.3" }
-ruspiro-register = { path = "../../register", version = "0.3" }
+ruspiro-boot = { version = "~0.5.3", features = ["multicore"] }
+ruspiro-allocator = "~0.4.5"
+ruspiro-gpio = "~0.4.3"
+ruspiro-singleton = "~0.4.3"
+ruspiro-interrupt = "~0.4.3"
+ruspiro-mmio-register = "~0.1.3"
 
 
 [features]
-default = ["ruspiro_pi3"]
-ruspiro_pi3 = [
-    "ruspiro-boot/ruspiro_pi3",
+default = ["pi3"]
+pi3 = [
     "ruspiro-gpio/ruspiro_pi3"
 ]
+
+[patch.crates-io]
+ruspiro-gpio = { path = "../../ruspiro-gpio"}
