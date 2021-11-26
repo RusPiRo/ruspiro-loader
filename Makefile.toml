@@ -33,13 +33,19 @@ dependencies = [
     "build"
 ]
 
+[tasks.prepstub]
+command = "mkdir"
+args = ["-p", "./target/aarch64-ruspiro/release"]
+
 [tasks.buildstub_high]
 command = "${CC}"
 args = ["-DBCM2711=1", "-DHIGH_PERI=1", "-c", "./src/asm/armstub8.S", "-o", "./target/aarch64-ruspiro/release/armstub8.o"]
+dependencies = ["prepstub"]
 
 [tasks.buildstub_low]
 command = "${CC}"
 args = ["-DBCM2711=1", "-DHIGH_PERI=0", "-c", "./src/asm/armstub8.S", "-o", "./target/aarch64-ruspiro/release/armstub8.o"]
+dependencies = ["prepstub"]
 
 [tasks.linkstub_low]
 command = "${LD}"
