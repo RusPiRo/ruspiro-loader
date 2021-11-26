@@ -14,12 +14,12 @@ use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
-    // Panicing is undefined behaviour so we are unable to recover from one into a valid state.
-    // Halt the panicing core and safely do nothing!
-    loop {}
+  // Panicing is undefined behaviour so we are unable to recover from one into a valid state.
+  // Halt the panicing core and safely do nothing!
+  loop {}
 }
 
 #[lang = "eh_personality"]
 fn eh_personality() {
-    // for the time beeing - nothing to be done as the usecase is a bit unclear
+  // for the time beeing - nothing to be done as the usecase is a bit unclear
 }

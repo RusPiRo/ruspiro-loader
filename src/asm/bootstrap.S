@@ -1,26 +1,18 @@
 /***************************************************************************************************
- * Raspberry Pi bootstrap code.
- * This is the minimal preparation to brach into the "Rust" code line for further initialization
- * and setup for the current kernel to be run at the Raspberry Pi.
- * 
- * This is the Aarch64 version of the bootstrapping. It assumes:
- * 1. There is actually only the main core entering this code
- * 2. The bootcode.bin/start.elf have parked the other cores of the CPU
- * 3. The current core is entering this code in EL2
- * 4. The start address of the entry point is 0x8_0000 which has to be ensured by the linker script
- * 5. The linker script also provides at least the following symbols:
- *  __stack_end__ 
- *  __stack_top_core3__
- *  __stack_top_core2__
- *  __stack_top_core1__
- *  __stack_top_EL3__
- *  __stack_top_EL2__
- *  __stack_top_EL1__ 
- *  __stack_top_EL0__
- *  __stack_top_core0__
- *  __stack_top__
- *  __heap_start
- *  __heap_end
+ * Raspberry Pi bootstrap code for the bootloader
+ *
+ * The bootstrapping for the bootloader is build for AArch64. It will be loaded to address 0x8_0000
+ * on the Raspberry PI as usual. However, as the booloader is responsible to wait for incomming new
+ * kernel files to execute them as they would be loaded from the SD card, this bootstrapper relocates
+ * itself to a lower address and continues there. This ensures new kernels of any size could be received
+ * and executed.
+ * Following assumtions has to be upheld:
+ * 1. The Linker script provides the following symbols:
+ *  __bootloader_start
+ *  __bootloader_end
+ *  Those symbols identify the size of the bootloader which requires to be a multiple of 16
+ *
+ * 2. The linker script assumes the bootloader is running from address 0x1_0000 already
  *
  * Copyright (c) 2019 by the authors
  *
@@ -35,7 +27,7 @@
 // entry point when an aarch32 kernel has been loaded and need to be run from aarch64 mode
 .global __boot_32 
 // helper to savely "hang" a core with nothing else to do
-.global __hang 
+.global __hang
 
 /***************************************************************************************************
  * main entry point using specific section that is ensured to be linked against the entrypoint
@@ -44,9 +36,38 @@
 .section .text.boot
 __boot:
     // the very first thing to do is to setup the stack pointer.
-    ldr		x0,=__stack_top_EL2__
-    mov     sp, x0
+    // as it is gowing downwards in memory when used we use the address the bootloader
+    // will store the arriving kernel as upper bound
+    mov     sp, #0x80000
 
+    // as the bootloader is loaded by the PI at address 0x8_0000 we will copy it
+    // to a lower address as the original kernel to be loaded by the bootloader 
+    // will be stored at this very position
+    // for the best copy performance and reliability the bootloader start and end
+    // addresses (and thus it's size) should be 16 BIT aligned
+    adr    x0, __bootloader_end // provided by the linker script
+    adr    x1, __bootloader_start // provided by the linker script
+    sub    x0, x0, x1 // gives the size of the bootloader to copy
+
+    mov    x2, #0x10000 // the static address the bootloader will be relocated to
+    mov    x1, #0x80000 // the static address the bootloader will be relocated from
+
+    // now copy the whole bootloader to the fixed address
+__copy:
+    ldp    x3, x4, [x1], #16
+    stp    x3, x4, [x2], #16
+    sub    x0, x0, #16
+    cbnz   x0, __copy
+
+    // calculate the address we'd like to continue code execution
+    adr    x0, __boot_continue
+    adr    x1, __bootloader_start
+    sub    x0, x0, x1
+    add    x0, x0, #0x10000
+    // jump to the calculated address, the bootloader continues there ;)
+    br     x0
+
+__boot_continue:
     // once done we clear the BSS section which contains any static field defined
     // in the Rust code line. This need to be properly initialized as it is expected
     // to be 0 when first accessed
@@ -57,8 +78,8 @@ __boot:
 	and     x3, x3, #3          // mask coreId value
 	cbnz	x3, .bss_done	    // only continue with bss clear on core 0
 
-	ldr		x0, =__bss_start__  // linker file ensures alignment to 16Bit's for start and end
-	ldr		x2, =__bss_end__ 
+	adr		x0, __bss_start__  // linker file ensures alignment to 16Bit's for start and end
+	adr		x2, __bss_end__ 
     sub     x2, x2, x0
     lsr     x2, x2, #4
     cbz     x2, .bss_done       // if bss section size is 0 -> skip initialization
@@ -98,6 +119,7 @@ __boot:
  **************************************************************************************************/
 .section .text
 __boot_64:
+    msr     elr_el2, x0 // store the address we'd like to return to with a EL2->EL1 switch
     msr     sctlr_el1, xzr  // initialize SCTRL_EL1 register before switching to EL1
      // enable AArch64 when switching to EL1 (otherwise EL1 would be executed in aarch32)
     mov     x2, #(1 << 31)      // AArch64
@@ -121,14 +143,15 @@ __boot_64:
                   1 << 8 | /* Mask Abort */ \
                   1 << 9)  /* Mask Debug */
     msr     spsr_el2, x2
-    msr     elr_el2, x0
+    //msr     elr_el2, x0
 
     // before we can actually lift this core to EL1 to execute the just loaded kernel
     // we need to ensure that the other cores are also in a state this kernel expects
     // so we need to kick them off, perform the exception level switch and park them again
     mrs     x1, mpidr_el1
     and     x1, x1, #3
-    cbnz    x1, .return64 // all cores != 0 can return in EL1 to the given address
+    //cbnz    x1, .return64 // all cores != 0 can return in EL1 to the given address
+    b .return64
     
     // store the address the cores should be kicked off with in the respective
     // memory locations
@@ -138,13 +161,13 @@ __boot_64:
     str     x23, [x22, #8]  // core 1 (0xE0)
     str     x23, [x22, #16] // core 2 (0xE8)
     str     x23, [x22, #24] // core 3 (0xF0)
-    bl      __cleaninvalidate_dcache // ensure the other cores get the memory update
+//    bl      __cleaninvalidate_dcache // ensure the other cores get the memory update
                                      // by clearing/invalidating the cache
     sev     // now wake up all the other cores
     // the secondary cores will clear their jump address and park after they have been switched to
     // EL1, so wait here until all other cores are parked
 .wait_secondary_el1_64:
-    bl      __cleaninvalidate_dcache // ensure we are not reading the old value from the cache
+//    bl      __cleaninvalidate_dcache // ensure we are not reading the old value from the cache
     ldr     x0, [x22, #8] // check core 1
     cbnz    x0, .wait_secondary_el1_64
     ldr     x0, [x22, #16] // check core 2
@@ -231,13 +254,13 @@ __boot_32:
     str     x23, [x22, #8]  // core 1 (0xE0)
     str     x23, [x22, #16] // core 2 (0xE8)
     str     x23, [x22, #24] // core 3 (0xF0)
-    bl      __cleaninvalidate_dcache // ensure the other cores get the memory update
+//    bl      __cleaninvalidate_dcache // ensure the other cores get the memory update
                                      // by clearing/invalidating the cache
     sev     // now wake up all the other cores
     // the secondary cores will clear their jump address and park after they have been switched to
     // EL1, so wait here until all other cores are parked
 .wait_secondary_el1_32:
-    bl      __cleaninvalidate_dcache // ensure we are not reading the old value from the cache
+//    bl      __cleaninvalidate_dcache // ensure we are not reading the old value from the cache
     ldr     x0, [x22, #8] // check core 1
     cbnz    x0, .wait_secondary_el1_32
     ldr     x0, [x22, #16] // check core 2

@@ -15,29 +15,31 @@ ENTRY(__boot)
 SECTIONS
 {
 	/* start memory address for RPi modules in RAM */
-	. = 0x80000;
+	. = 0x10000;
+	__bootloader_start = .;
 	.text.boot : { KEEP(*(.text.boot)) }
 	/**************************************************************************************************************
 	 * ensure running code waiting for new kernel is far enough in the memory to allow switching the boot part
 	 * starting from 0x80000 (aarch64) or 0x8000 (aarch32) on the fly.
 	 * The kernel to be loaded should always be smaller as this value!!!!!
-	 * So the actual new kernel need to be less than 512kB
+	 * So the actual new kernel need to be less than 400kB
 	 **************************************************************************************************************/
-	. += 0x90000;
+	/*. += 0xF0000;*/
     .text : {  *(.text*) }
     .rodata : { *(.rodata*) }
     .data : { *(.data*) }
     
-	. = ALIGN(8);
-    .init_array : {
+	
+  . = ALIGN(8);
+  .init_array : {
 		__init_start = .;
 		*(.init_array)
 		*(.init_array.*)
 		__init_end = .;
 	}
-    
-    /* bss section, contains all static variables of the rust code */
-    . = ALIGN(16);
+
+  /* bss section, contains all static variables of the rust code */
+  . = ALIGN(16);
 	.bss : { 
     	__bss_start__ = .;
     	*(.bss*)
@@ -45,6 +47,9 @@ SECTIONS
 		. = ALIGN(16);
     	__bss_end__ = .;
     }
+
+	PROVIDE(_data = .);
+	.data : { *(.data*) }
 
 	/* fill the binary to always have an aligned binary size - needed for the bootloader on RPi to work properly */
 	.fill : {
@@ -62,31 +67,27 @@ SECTIONS
 	 * for core 0
 	 *********************************************************************************/
 	. = ALIGN(16);
-	__stack_end__ = .;
-	. += 0x04000;
-	__stack_top_core3__ = .;
-	. += 0x04000;
-	__stack_top_core2__ = .;
-	. += 0x04000;
-	__stack_top_core1__ = .;
+	__bootloader_end = .;
+/*	__stack_end__ = .;
 	. += 0x01000;
-	__stack_top_EL3__ = .;
-	. += 0x01000;
-	__stack_top_EL2__ = .;
-	. += 0x01000;
-	__stack_top_EL1__ = .;
-	. += 0x01000;
-	__stack_top_EL0__ = .;
 	__stack_top_core0__ = .;
-	
 	__stack_top__ = .;
+	*/
 	/* the heap memory address space starts where the executable and the static variables ends
 	 * (aligned to 4kB to fit into a MMU page)
 	 */
+	 
     . = ALIGN(4096);
 	__heap_start = .;
     /* heap end is defined by the usage split of CPU/GPU - however,
 	 * from link script point of view this is where the memory ends (on RPi3)
 	 */
+	 /*
 	__heap_end = 0x3E000000;
+	*/
+
+	/DISCARD/ :
+	{
+		*(.note.gnu*)
+	}
 }
