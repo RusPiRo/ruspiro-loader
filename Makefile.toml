@@ -1,6 +1,7 @@
 [env.development]
 CC = "aarch64-none-elf-gcc"
 AR = "aarch64-none-elf-ar"
+LD = "aarch64-none-elf-ld"
 OCOPY = "aarch64-none-elf-objcopy"
 CFLAGS = "-march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53"
 RUSTFLAGS = "-C linker=${CC} -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-nostartfiles -C link-arg=-T./linkbl.ld"
@@ -8,6 +9,7 @@ RUSTFLAGS = "-C linker=${CC} -C target-cpu=cortex-a53 -C target-feature=+strict-
 [env.pipeline]
 CC = "aarch64-linux-gnu-gcc"
 AR = "aarch64-linux-gnu-ar"
+LD = "aarch64-linux-gnu-ld"
 OCOPY = "aarch64-linux-gnu-objcopy"
 CFLAGS = "-march=armv8-a -Wall -O3 -nostdlib -nostartfiles -ffreestanding -mtune=cortex-a53"
 RUSTFLAGS = "-C linker=${CC} -C target-cpu=cortex-a53 -C target-feature=+strict-align,+a53,+fp-armv8,+neon -C link-arg=-nostartfiles -C link-arg=-T./linkbl.ld"
@@ -25,43 +27,43 @@ command = "cargo"
 args = ["build", "--release", "--features", "${FEATURES}"]
 
 [tasks.kernel]
-command = "aarch64-none-elf-objcopy"
+command = "${OCOPY}"
 args = ["-O", "binary", "./target/aarch64-ruspiro/release/kernel", "./target/kernel8.img"]
 dependencies = [
     "build"
 ]
 
 [tasks.buildstub_high]
-command = "aarch64-none-elf-gcc"
+command = "${CC}"
 args = ["-DBCM2711=1", "-DHIGH_PERI=1", "-c", "./src/asm/armstub8.S", "-o", "./target/aarch64-ruspiro/release/armstub8.o"]
 
 [tasks.buildstub_low]
-command = "aarch64-none-elf-gcc"
+command = "${CC}"
 args = ["-DBCM2711=1", "-DHIGH_PERI=0", "-c", "./src/asm/armstub8.S", "-o", "./target/aarch64-ruspiro/release/armstub8.o"]
 
 [tasks.linkstub_low]
-command = "aarch64-none-elf-ld"
+command = "${LD}"
 args = ["-T./linkstub.ld", "./target/aarch64-ruspiro/release/armstub8.o", "-o", "./target/aarch64-ruspiro/release/armstub8.elf"]
 dependencies = [
     "buildstub_low"
 ]
 
 [tasks.linkstub_high]
-command = "aarch64-none-elf-ld"
+command = "${LD}"
 args = ["-T./linkstub.ld", "./target/aarch64-ruspiro/release/armstub8.o", "-o", "./target/aarch64-ruspiro/release/armstub8.elf"]
 dependencies = [
     "buildstub_high"
 ]
 
 [tasks.stub_low]
-command = "aarch64-none-elf-objcopy"
+command = "${OCOPY}"
 args = ["-O", "binary", "./target/aarch64-ruspiro/release/armstub8.elf", "./target/armstub8.bin"]
 dependencies = [
     "linkstub_low"
 ]
 
 [tasks.stub_high]
-command = "aarch64-none-elf-objcopy"
+command = "${OCOPY}"
 args = ["-O", "binary", "./target/aarch64-ruspiro/release/armstub8.elf", "./target/armstub8.bin"]
 dependencies = [
     "linkstub_high"
